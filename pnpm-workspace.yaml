@@ -1,0 +1,31 @@
+packages:
+  - packages/*
+
+# Supply-chain policy: reviewed changes only; no per-package exceptions yet.
+engineStrict: true
+saveExact: true
+ignoreScripts: true
+allowBuilds: {}
+strictDepBuilds: true
+enablePrePostScripts: false
+verifyDepsBeforeRun: error
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+trustLockfile: false
+trustPolicy: no-downgrade
+blockExoticSubdeps: true
+verifyStoreIntegrity: true
+strictStorePkgContentCheck: true
+sideEffectsCache: false
+nodeLinker: isolated
+hoist: false
+shamefullyHoist: false
+autoInstallPeers: false
+strictPeerDependencies: true
+linkWorkspacePackages: false
+storeDir: .local/pnpm-store
+# Node 22 types pin an older undici declaration package that fails provenance checks.
+# Keep the same major, use an attested release, and typecheck the combination.
+overrides:
+  '@types/node@22.20.1>undici-types': 6.28.1
