@@ -1,9 +1,9 @@
 # Trusted toolchain image ONLY, not the untrusted-worker VM boundary.
 FROM docker.io/library/node@sha256:4d676821dff059fd00d277ee4261ef34ea712317fed0737c03941481b5760c96
-ENV COREPACK_HOME=/opt/corepack
-RUN corepack enable pnpm && mkdir -p /opt/corepack /workspace && chown node:node /opt/corepack /workspace
-WORKDIR /workspace
-COPY --chown=node:node . /workspace
+ENV COREPACK_HOME=/home/node/.cache/corepack
+RUN corepack enable pnpm
+WORKDIR /home/node/workbench
+COPY --chown=node:node . /home/node/workbench
 USER node
 RUN corepack install \
     && node --experimental-strip-types packages/tooling/src/sources.ts \
@@ -11,4 +11,4 @@ RUN corepack install \
     && pnpm check \
     && rm -rf .local/pnpm-store
 # Checks need writable compiler output, never a writable host checkout.
-CMD ["sh", "-eu", "-c", "cp -a /workspace /tmp/workspace; cd /tmp/workspace; pnpm check"]
+CMD ["sh", "-eu", "-c", "cp -a /home/node/workbench /tmp/workspace; cd /tmp/workspace; pnpm check"]
