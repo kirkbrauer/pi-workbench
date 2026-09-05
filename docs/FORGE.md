@@ -15,7 +15,9 @@ queue, claim a queue run, or transfer ownership without Kirk's decision.
 
 The stable proposed required check is `foundation-checks`. It runs on
 `pull_request` and `merge_group: checks_requested`, checks out the supplied merge
-revision, installs locked dependencies, checks source and candidate-range DCO.
+revision, activates integrity-pinned pnpm through Corepack, installs frozen no-script
+dependencies, checks TypeScript workspaces/source policy/candidate-range DCO,
+and blocks known high/critical dependency advisories.
 Hosted ephemeral runners only; no persistent workstation runner. No secrets,
 write token, `pull_request_target`, dependency scripts or credential caching.
 The check implementation is candidate code: human review of gate changes remains

@@ -1,56 +1,66 @@
-# Tier 0 review handoff — foundation increment
+# Tier 0 review handoff — foundation increment (PR #1)
 
 ## Outcome
 
-- Intended outcome: reproducible repository checks and preserved attribution;
-  foundation only, not a completed Tier 0 sandbox.
-- Changed: pinned Node/npm/Pi/lint/type tools, lockfile, a compiled TypeScript tooling workspace,
-  DCO behavior tests, installed-hook exercise and hosted PR/merge-group workflow.
-- Inspect closely: hook identity preservation and fixtures; workflow permissions
-  and candidate SHA selection; old-but-exact initial dependency pins.
+- Intended outcome: a reproducible **pnpm/Corepack TypeScript monorepo**, versioned
+  design baseline, supply-chain gates and preserved attribution. Not completed Tier 0.
+- Changed: `packages/tooling` implements real checks/tests; exact tools/lock; frozen
+  no-script installation; source/integrity/age/provenance checks; Actions audit;
+  original handoff Markdown imported under `docs/design/` with source checksums.
+- Inspect closely: supply-chain policy and Node-types override; Corepack pin and
+  candidate-SHA CI permissions; hook fixture identity and historical-vs-current docs.
 
 ## Revisions and dependencies
 
 - Repository: https://github.com/kirkbrauer/pi-workbench
-- Feature branch: `feat/t0-foundation`; PR/revision/run links will be recorded on
-  the published PR. This document does not self-certify its containing SHA.
-- Stack: foundation, then runtime/image/preflight increment, both Tier 0.
-- Previous base: empty `0d3af96`; no accepted tier exists.
-- Tool/config pins: `config/foundation.json`, `package-lock.json`. VM/image
-  acceptance evidence does not yet exist.
+- Initial PR: https://github.com/kirkbrauer/pi-workbench/pull/1 (`feat/t0-foundation`).
+- Previous base: empty `0d3af964e9131d4a8cbabaade0fde573f053db28`; no accepted tier.
+- The initial npm revision `d5161da40f888aec82d6560783ff5e53696b8b58` passed
+  [Actions 33997825483](https://github.com/kirkbrauer/pi-workbench/actions/runs/33997825483)
+  on tested merge `b6cc504411b0ab8ea72033d70a8ccd795db23dc5`.
+  **That run does not validate the subsequent pnpm changes.** Current exact SHA,
+  clean-install results and new run links are attached to the PR after commit.
+- Inputs: Node 22.23.2, Corepack 0.34.6, pnpm 11.25.0 + integrity, Pi 0.85.0,
+  Biome 2.5.12, TypeScript 7.0.2; `config/foundation.json`, `pnpm-lock.yaml`.
+- Toolchain base linux/amd64 image:
+  `docker.io/library/node@sha256:4d676821dff059fd00d277ee4261ef34ea712317fed0737c03941481b5760c96`.
+- Follow-up: native-runtime/image/preflight PR, stacked inside Tier 0.
 
 ## Verification
 
-| Predicate | Check | Revision/configuration | Result / gap |
-|---|---|---|---|
-| Toolchain reproducible | `npm ci`, `npm run check` | exact pins/lock, current working tree | Local install in bounded rootless Node container and checks passed; clean candidate rerun pending |
-| Hooks enforce policy | `npm run test:hooks` | upstream 4b7d05e + pinned hook hashes | Attributed commit, local feature push, agent-deny push, chained rejecting project hook passed; fixtures removed |
-| CI executes | `foundation-checks` | actual PR merge SHA required | Workflow prepared; live run pending |
-| Merge queue | API + GitHub availability docs | personal User owner | Unsupported here; no queue configured/run |
-| Native VM executes | native OpenShell 0.0.116 | not installed/on PATH | Blocked; no VM evidence |
-| Boundary / resources / persistence | real synthetic runtime tests | no VM configuration yet | Unknown, mandatory and blocking |
-| Recovery | README | foundation only | No services installed; VM recovery untested |
-| Human tier acceptance | Kirk's GitHub decision + merged base | absent | Blocked |
+| Predicate | Check | Result / remaining gap |
+|---|---|---|
+| Reproducible setup | Corepack + frozen pnpm + `pnpm check` | Working-tree checks passed in bounded rootless container; final clean SHA rerun required |
+| Real tooling behavior | 7 unit tests | Source confusion/alternate URLs, policy weakening, missing DCO rejected; positive controls pass |
+| Supply-chain observations | `pnpm audit --audit-level high` | No known vulnerabilities in current lock at investigation time; final CI audit required; not proof of no malware |
+| Hook integration | upstream 4b7d05e, pinned executable hashes | Attributed commit/local push + agent-deny and chained hook denial passed; repeat for final candidate |
+| PR CI | `foundation-checks` | Initial npm run passed; final pnpm run pending |
+| Queue | API + GitHub availability docs | Personal owner is ineligible; no queue configured/run |
+| Native VM | OpenShell 0.0.116, explicit VM required | Not boot-tested; Kirk granted temporary KVM ACL, now readable/writable |
+| Boundary/resources/lifecycle | Synthetic real-VM conformance | Unknown, mandatory, blocking |
+| Recovery | README + upcoming runtime instructions | Foundation recovery provided; native VM recovery untested |
+| Human acceptance | Kirk's GitHub decision + observed accepted merge | Pending; Tier 1 remains blocked |
 
 ## Operational impact
 
-- Created the public repository and empty base as authorized; no infrastructure
-  settings changed. Pulled the official Node toolchain image into rootless Podman
-  cache; dependency install mounted only this selected checkout with private
-  SELinux labeling, no host home/env credentials/sockets. Temporary container
-  removed. Downloaded OpenShell RPM/reference files for inspection under `/tmp`;
-  queried package metadata, did not install it.
-- Personal Git/GitHub identity used only for trusted publication/metadata.
-  No Codex/model credentials enrolled, shared, copied or sent to a worker.
-- Toolchain container was non-root, read-only root, 2 CPUs/2 GiB/256 PIDs requested;
-  this is **not** verified native VM isolation or resource evidence.
-- Recovery: retain source, reinstall locked dependencies; do not remove existing
-  workloads, disable host security or replace hooks. Runtime follow-up will record
-  exact bounded cleanup before any native launch.
+- Public repository and empty base created as authorized. Existing global hooks,
+  Git identity, host Pi/Node, SELinux, firewalld, networking and workloads preserved.
+- Rootless Node toolchain images/dependency cache created. Temporary container has
+  only this selected checkout, read-only root, non-root user, dropped capabilities,
+  no-new-privileges, bounded scratch and requested 2 CPU/2 GiB/256 PID limits.
+  This is not native VM conformance. No host home, keyring, auth, SSH or engine
+  socket is mounted; environment credentials are not inherited.
+- Trusted personal gh/keyring identity is used only for publication/metadata.
+  No real Codex credentials enrolled or shared. Temporary helpers/cache live in
+  ignored `.local/`; downloads under `/tmp` were inspected, not RPM-installed.
+- Preserve source when recreating ignored dependencies. Investigate security-check
+  failures rather than exceptions. Do not delete existing host workloads/tools or
+  replace attribution hooks as recovery.
 
 ## Review / next action
 
-Kirk's review: pending. Merge/queue: not requested. Stay in Tier 0.
-Resolve VM installation/network authority, required checks/reviewer identity and
-board integration. Tier 1 remains blocked even if this individual PR merges.
-Resume with `git status`, `docs/BOARD.md`, PR runs and `npm run check`.
+Kirk review pending. No enqueue/merge authorized or performed. Resolve native VM
+boundary and lifecycle predicates in the next Tier 0 increment. Select a Project
+and scoped board integration; current lightweight board is `BOARD.md`. See
+`FORGE.md` for required-check and distinct reviewer-identity constraints. Resume
+with `git status`, the PR's actual head/runs and the pinned development commands.

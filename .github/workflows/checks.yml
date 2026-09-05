@@ -21,11 +21,20 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .node-version
-      - name: Install locked dependencies without lifecycle scripts
-        run: npm ci --ignore-scripts --no-audit --no-fund
-      - run: npm run check
+      - name: Activate integrity-pinned pnpm through bundled Corepack
+        run: |
+          test "$(corepack --version)" = "0.34.6"
+          corepack enable pnpm
+          corepack install
+      - name: Validate direct sources before dependency download
+        run: node --experimental-strip-types packages/tooling/src/sources.ts
+      - name: Install frozen dependencies without lifecycle scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm check
+      - name: Block known high or critical vulnerabilities (including dev dependencies)
+        run: pnpm audit --audit-level high
       - name: Check candidate commit trailers
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
           HEAD_SHA: ${{ github.sha }}
-        run: npm run check:commits -- "$BASE_SHA" "$HEAD_SHA"
+        run: pnpm check:commits "$BASE_SHA" "$HEAD_SHA"
