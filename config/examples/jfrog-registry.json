@@ -1,0 +1,6 @@
+{
+  "id": "work-jfrog",
+  "registry": "https://jfrog.example.invalid/artifactory/api/npm/curated/",
+  "curation": "required",
+  "caBundleFile": "/operator/approved/corporate-ca.pem"
+}
