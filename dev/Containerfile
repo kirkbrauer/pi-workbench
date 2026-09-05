@@ -9,6 +9,8 @@ RUN corepack install \
     && node --experimental-strip-types packages/tooling/src/sources.ts \
     && pnpm install --frozen-lockfile --ignore-scripts \
     && pnpm check \
-    && rm -rf .local/pnpm-store
-# Checks need writable compiler output, never a writable host checkout.
-CMD ["sh", "-eu", "-c", "cp -a /home/node/workbench /tmp/workspace; cd /tmp/workspace; pnpm check"]
+    && rm -rf .local/pnpm-store \
+    && mv /home/node/workbench /home/node/workbench-seed \
+    && mkdir /home/node/workbench
+# Preserve pnpm's installed workspace path in a bounded tmpfs, not a host mount.
+CMD ["sh", "-eu", "-c", "cp -a /home/node/workbench-seed/. /home/node/workbench; pnpm check"]

@@ -12,5 +12,6 @@ git archive --format=tar HEAD | podman build --file dev/Containerfile \
   --timestamp "$epoch" --rewrite-timestamp --label "org.opencontainers.image.revision=$revision" \
   --iidfile ".local/evidence/dev-image-$revision.id" --tag "$image" -
 podman run --rm --network=none --read-only --cap-drop=ALL --security-opt=no-new-privileges \
-  --pids-limit=256 --memory=2g --cpus=2 --tmpfs /tmp:rw,nosuid,nodev,size=1g "$image"
+  --pids-limit=256 --memory=2g --cpus=2 --tmpfs /tmp:rw,nosuid,nodev,size=256m \
+  --tmpfs /home/node/workbench:rw,nosuid,nodev,uid=1000,gid=1000,mode=0700,size=1g "$image"
 printf 'tested source=%s image=%s\n' "$revision" "$image"

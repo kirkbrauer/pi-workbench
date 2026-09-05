@@ -22,7 +22,8 @@ The image builder feeds **git archive HEAD**, never the entire working directory
 to rootless Podman. It fails on uncommitted/untracked source. The build downloads
 public packages with scripts disabled; inputs undergo the same source/lock checks.
 The smoke run is offline, non-root, read-only root, no capabilities, no-new-privileges,
-2 CPU/2 GiB/256 PIDs, and a bounded scratch copy for compiler output. Its image ID
+2 CPU/2 GiB/256 PIDs, and a bounded scratch copy for compiler output at the original install path
+(pnpm correctly rejects moving installed workspace metadata to a different path). Its image ID
 is recorded under `.local/evidence/dev-image-<SHA>.id`. The source revision is also
 an image label. An image digest is evidence only after its actual build/run.
 
