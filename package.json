@@ -1,0 +1,32 @@
+{
+  "name": "pi-workbench",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.20.0",
+    "npm": "10.9.3"
+  },
+  "packageManager": "npm@10.9.3",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "format": "biome format --write .",
+    "lint": "biome check .",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run build && npm run test --workspaces",
+    "check:toolchain": "node packages/tooling/dist/src/toolchain.js",
+    "check:hooks": "node packages/tooling/dist/src/hooks.js",
+    "test:hooks": "node packages/tooling/dist/src/hooks.js --exercise",
+    "check:commits": "node packages/tooling/dist/src/commits.js",
+    "check": "npm run lint && npm run typecheck && npm test && npm run check:toolchain"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.2.4",
+    "@earendil-works/pi-coding-agent": "0.85.1",
+    "@types/node": "22.18.6",
+    "typescript": "5.9.3"
+  }
+}

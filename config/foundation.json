@@ -1,0 +1,13 @@
+{
+  "node": "22.20.0",
+  "npm": "10.9.3",
+  "pi": "0.85.1",
+  "hooks": {
+    "repository": "https://github.com/kirkbrauer/git-attribution-hooks.git",
+    "revision": "4b7d05eff74e56a7277cbbb22ac77ad4247bc43b",
+    "files": {
+      "prepare-commit-msg": "2dd1b54a93239822062d5433be9933d4a0a58f6520011b4cd215d98872b8c87a",
+      "pre-push": "95f2949c61a97b5c014732fe3fb6eff0130bec3bf20e9db51a0ffd1a36566f77"
+    }
+  }
+}

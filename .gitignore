@@ -1,0 +1,8 @@
+node_modules/
+.local/
+dist/
+coverage/
+*.log
+.env
+.env.*
+.pi/
