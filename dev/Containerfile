@@ -2,15 +2,15 @@
 FROM docker.io/library/node@sha256:4d676821dff059fd00d277ee4261ef34ea712317fed0737c03941481b5760c96
 ENV COREPACK_HOME=/home/node/.cache/corepack
 RUN corepack enable pnpm
-WORKDIR /home/node/workbench
-COPY --chown=node:node . /home/node/workbench
+WORKDIR /tmp/workbench
+COPY --chown=node:node . /tmp/workbench
 USER node
 RUN corepack install \
     && node --experimental-strip-types packages/tooling/src/sources.ts \
     && pnpm install --frozen-lockfile --ignore-scripts \
     && pnpm check \
     && rm -rf .local/pnpm-store \
-    && mv /home/node/workbench /home/node/workbench-seed \
-    && mkdir /home/node/workbench
+    && mv /tmp/workbench /home/node/workbench-seed
+WORKDIR /home/node
 # Preserve pnpm's installed workspace path in a bounded tmpfs, not a host mount.
-CMD ["sh", "-eu", "-c", "cp -a /home/node/workbench-seed/. /home/node/workbench; pnpm check"]
+CMD ["sh", "-eu", "-c", "cp -a /home/node/workbench-seed /tmp/workbench; cd /tmp/workbench; pnpm check"]
