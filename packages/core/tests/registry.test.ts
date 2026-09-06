@@ -211,10 +211,19 @@ test("same-commit branch drift and replacement Git storage are not silently adop
   await f.git.raw(["symbolic-ref", "HEAD", "refs/heads/other"]);
   await assert.rejects(registry.context(), /checkout drift: branch/);
   await registry.refresh(workspace.id, 1);
+  const before = statSync(join(f.checkout, ".git"), { bigint: true });
   const backup = join(f.root, "git-copy");
   cpSync(join(f.checkout, ".git"), backup, { recursive: true });
   rmSync(join(f.checkout, ".git"), { recursive: true });
   cpSync(backup, join(f.checkout, ".git"), { recursive: true });
+  const after = statSync(join(f.checkout, ".git"), { bigint: true });
+  t.diagnostic(
+    JSON.stringify({
+      inodeReused: before.dev === after.dev && before.ino === after.ino,
+      birthtimeBefore: String(before.birthtimeNs),
+      birthtimeAfter: String(after.birthtimeNs),
+    }),
+  );
   await assert.rejects(
     registry.refresh(workspace.id, 2),
     /checkout drift: commonIdentity/,

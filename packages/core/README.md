@@ -91,8 +91,8 @@ success. Help exits zero but is text, not a command-result envelope.
   increments the global context generation, even for an unselected workspace.
   It does not reset, checkout, stage, commit or discard source.
 - **Missing/moved/replaced checkout or Git storage:** stop and inspect. `refresh`
-  cannot accept a changed root, Git directory, shared directory or its device/inode
-  identity. Automated relocation, reassignment and removal are not implemented.
+  cannot accept a changed root, Git directory, shared directory or its observed
+  device/inode/birth-time fingerprint. Automated relocation, reassignment and removal are not implemented.
 - **Wrong profile:** use the correct profile's independent state directory; do not
   relabel or copy its database to make the check pass.
 - **Unsupported schema/corrupt state:** retain the original. No downgrade, reset or
@@ -155,6 +155,10 @@ hostile parents/concurrent writers. The database is operator-controlled, not an
 untrusted SQLite input. Profiles partition records through separate stores and
 explicit checks, not OS isolation from the same host user. The environment ID is a
 local registry identifier, not an attested host or approved execution destination.
+The Git storage fingerprint is also only a local observation: birth time helps detect
+inode reuse after replacement, but unavailable/coarse or manipulated filesystem
+metadata can hide replacement. It is not proof of repository identity or an action
+security boundary.
 
 Git observations use simple-git's process queue/abort API, a fixed binary and a
 replacement environment without ambient Git overrides or user/system Git config.

@@ -97,7 +97,7 @@ export async function inspectCheckout(path: string): Promise<Checkout> {
       root,
       gitDir,
       commonDir,
-      commonIdentity: `${common.dev}:${common.ino}`,
+      commonIdentity: `${common.dev}:${common.ino}:${common.birthtimeNs}`,
       revision,
       branch,
     };
