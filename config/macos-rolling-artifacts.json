@@ -1,0 +1,21 @@
+{
+  "openshell": "0.0.117-dev.82+gb9c7d5c70",
+  "source": "b9c7d5c7070e31fddb156b5051cc1d9f4882a89b",
+  "releaseRun": "33985485730",
+  "binaries": {
+    "openshell": "e94b377b037973b26b448d206197a90ac354ddb4e015d72102097919fb6b45b3",
+    "openshell-gateway": "041a2888b4802887a384889044f0f0faabbd71b8c40edf173526d863880f817b",
+    "openshell-driver-vm": "4472a53d3546596d49aa9598c665db0d32ce8191372c1c9f30b4021d7f32de2e"
+  },
+  "archives": {
+    "openshell-aarch64-apple-darwin.tar.gz": "b0988d9ecb754a4e230a3af019f89ad155729201df0b0146b0b589eb5e7f608e",
+    "openshell-gateway-aarch64-apple-darwin.tar.gz": "5c141500908c23ed107aea792a5c29655109d816b430a19c07974a01264a72a5",
+    "openshell-driver-vm-aarch64-apple-darwin.tar.gz": "57ccbec1d5b91cdfc420ed996b5f84f066f5ced64156a46360506f7fc5db5153"
+  },
+  "originalDriver": "9cef07a24828964f31e49d1af4bf338b407a4bd75f5c3821f939c89fb99e36ca",
+  "attestation": "driver archive verified; CLI and gateway not attested by rolling workflow, GitHub asset hashes verified",
+  "referenceRuntimeArchive": "04349e6395c60e8cda059cc74e24105fdd23cec49ceac84966ce7377396e757d",
+  "image": "ghcr.io/nvidia/openshell-community/sandboxes/base@sha256:04dd51f785ae52557ac53d4b12b3a0611a7347e5b8738e6278203465e6fb726e",
+  "imageConfig": "sha256:bcf4897ab8f95ec875847998297da98d16a44c8741c62c738d917f0eb8d35097",
+  "platform": "linux/arm64"
+}

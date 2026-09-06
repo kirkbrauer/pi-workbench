@@ -35,6 +35,15 @@ class MacProbeTests(unittest.TestCase):
         self.assertEqual(config["drivers"]["vm"]["mem_mib"], 2048)
         self.assertEqual(config["drivers"]["vm"]["overlay_disk_mib"], 4096)
 
+    def test_profiles_are_explicit_and_stable_is_default(self):
+        stable = probe.Probe(Path('/unused'))
+        rolling = probe.Probe(Path('/unused'), 'rolling')
+        self.assertEqual(stable.profile, 'stable')
+        self.assertEqual(stable.pins_path.name, 'macos-native-artifacts.json')
+        self.assertEqual(rolling.pins_path.name, 'macos-rolling-artifacts.json')
+        with self.assertRaises(ValueError):
+            probe.Probe(Path('/unused'), 'latest')
+
     def test_checkpoint_failure_never_stops(self):
         events = []
         with self.assertRaisesRegex(RuntimeError, "sync failed"):

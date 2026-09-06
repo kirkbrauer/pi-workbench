@@ -172,7 +172,11 @@ guest_tls_key = "{root}/tls/client/tls.key"
 
 
 class Probe:
-    def __init__(self, evidence):
+    def __init__(self, evidence, profile="stable"):
+        if profile not in ("stable", "rolling"):
+            raise ValueError("unknown artifact profile")
+        self.profile = profile
+        self.pins_path = REPO / "config" / ("macos-native-artifacts.json" if profile == "stable" else "macos-rolling-artifacts.json")
         self.evidence = evidence.resolve()
         self.root = None
         self.gateway = None
@@ -215,7 +219,7 @@ class Probe:
         for name in ("mke2fs", "debugfs"):
             if not os.access(f"/opt/homebrew/opt/e2fsprogs/sbin/{name}", os.X_OK):
                 raise RuntimeError(f"missing reviewed e2fsprogs {name}")
-        pins = json.loads((REPO / "config/macos-native-artifacts.json").read_text())
+        pins = json.loads(self.pins_path.read_text())
         if pins["platform"] != "linux/arm64" or not re.fullmatch(
                 r"ghcr.io/nvidia/openshell-community/sandboxes/base@sha256:[0-9a-f]{64}", pins["image"]):
             raise RuntimeError("image must be platform-inspected and digest-pinned")
@@ -227,7 +231,7 @@ class Probe:
         for name in ("bin", "home", "tmp", "run", "state"):
             (self.root / name).mkdir(mode=0o700)
         self.env = clean_env(self.root)
-        source = REPO / ".local/macos-preflight"
+        source = REPO / ".local" / ("macos-preflight" if self.profile == "stable" else "macos-rolling")
         for name, digest in pins["binaries"].items():
             original = source / ("signed" if name.endswith("-vm") else "unpacked") / name
             if sha(original) != digest:
@@ -258,9 +262,10 @@ class Probe:
             "checkout": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
             "host": subprocess.check_output(["/usr/bin/sw_vers"], text=True),
             "architecture": platform.machine(), "state": str(self.root), "pins": pins,
+            "profile": self.profile, "gateway_umask": "077",
             "hashes": {str(p.relative_to(REPO)): sha(p) for p in (
                 REPO / "scripts/macos-native-probe.py", REPO / "scripts/guest-runtime-diagnose.py",
-                REPO / "config/macos-native-artifacts.json", REPO / "config/native-diagnostic-policy.yaml")},
+                self.pins_path, REPO / "config/native-diagnostic-policy.yaml")},
             "config_sha256": sha(self.root / "gateway.toml"),
             "synthetic_pki_hashes": {name: sha(self.root / "tls" / name) for name in
                                      ("synthetic.cnf", "ca.crt", "server/tls.crt", "client/tls.crt")},
@@ -382,12 +387,27 @@ print(json.dumps(report, indent=2))
                     self.lifecycle(mode)
                 except Exception as error:
                     self.results[mode] = f"error: {error}"
+        self.inspect_disks("diagnostic")
+        self.cli("diagnostic-logs", ["logs", NAMES[0], "--source", "sandbox", "--level", "debug", "-n", "100"], required=False)
         self.capture_logs("diagnostic")
         self.cli("delete-diagnostic", ["sandbox", "delete", NAMES[0]])
         # Separate strict policy, unchanged even if diagnostic startup failed.
         self.results["create_strict"] = self.create(NAMES[1], "strict", 60)[0]
         self.cli("strict-phase", ["sandbox", "get", NAMES[1]], required=False)
+        self.inspect_disks("strict")
+        self.cli("strict-logs", ["logs", NAMES[1], "--source", "sandbox", "--level", "debug", "-n", "100"], required=False)
         self.capture_logs("strict")
+
+    def inspect_disks(self, label):
+        # Read-only inode metadata only. No -w, no mount, no keys/DB/file dumps.
+        for path in self.root.glob("state/**/overlay.ext4"):
+            self.command(f"{label}-upper-inode-{path.parent.name}",
+                         ["/opt/homebrew/opt/e2fsprogs/sbin/debugfs", "-R", "stat /upper", str(path)],
+                         timeout=15, required=False)
+        for path in self.root.glob("state/**/rootfs.ext4"):
+            self.command(f"{label}-lower-inode-{path.parent.name}",
+                         ["/opt/homebrew/opt/e2fsprogs/sbin/debugfs", "-R", "stat /", str(path)],
+                         timeout=15, required=False)
 
     def capture_logs(self, label):
         if not self.root:
@@ -442,10 +462,11 @@ print(json.dumps(report, indent=2))
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence", required=True, type=Path, help="new private output directory; never publish raw logs blindly")
+    parser.add_argument("--profile", choices=("stable", "rolling"), default="stable")
     args = parser.parse_args()
     os.umask(0o077)
     args.evidence.mkdir(mode=0o700, parents=True, exist_ok=False)
-    probe = Probe(args.evidence)
+    probe = Probe(args.evidence, args.profile)
 
     def interrupted(signum, _frame):
         raise RuntimeError(f"probe interrupted/deadline: signal {signum}")
