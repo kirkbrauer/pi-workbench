@@ -59,6 +59,13 @@ a disposable local repository/bare remote, preserving actual identity, session
 and policy. No fixtures are published to GitHub. Human-certification policies or
 unexpected hook refusals must be handed back, never overridden to pass a test.
 
+For staged-code formatting, explicitly run `pnpm install:format-hook` using the
+approved host-native pinned Node. It chains a repository-local check through the
+existing attribution hook without changing `core.hooksPath` or upstream hooks.
+It checks index blobs and never restages partially staged work. See
+[FORMATTING-HOOKS.md](docs/FORMATTING-HOOKS.md); run `pnpm test:format-hook` in the
+actual agent session to exercise formatting plus attribution together.
+
 For a fresh host without hooks, inspect and use upstream's supported installer:
 
 ```sh
