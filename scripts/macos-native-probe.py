@@ -172,7 +172,10 @@ guest_tls_key = "{root}/tls/client/tls.key"
 
 
 class Probe:
-    def __init__(self, evidence, profile="stable"):
+    def __init__(self, evidence, profile="stable", gateway_umask=0o077):
+        if gateway_umask not in (0o077, 0o022):
+            raise ValueError("unsupported gateway umask")
+        self.gateway_umask = gateway_umask
         if profile not in ("stable", "rolling"):
             raise ValueError("unknown artifact profile")
         self.profile = profile
@@ -262,7 +265,7 @@ class Probe:
             "checkout": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
             "host": subprocess.check_output(["/usr/bin/sw_vers"], text=True),
             "architecture": platform.machine(), "state": str(self.root), "pins": pins,
-            "profile": self.profile, "gateway_umask": "077",
+            "profile": self.profile, "gateway_umask": f"{self.gateway_umask:03o}",
             "hashes": {str(p.relative_to(REPO)): sha(p) for p in (
                 REPO / "scripts/macos-native-probe.py", REPO / "scripts/guest-runtime-diagnose.py",
                 self.pins_path, REPO / "config/native-diagnostic-policy.yaml")},
@@ -282,7 +285,11 @@ class Probe:
             "--enable-loopback-service-http", "false", "--tls-cert", str(root / "tls/server/tls.crt"),
             "--tls-key", str(root / "tls/server/tls.key"), "--tls-client-ca", str(root / "tls/ca.crt"),
             "--db-url", f"sqlite:{root}/gateway.db?mode=rwc"],
-            cwd=root, env=self.env, stdin=subprocess.DEVNULL, stdout=self.log, stderr=self.log, start_new_session=True)
+            # Guest ext4 upper-root metadata inherits the driver's creation mask.
+            # Explicit experiment: only this child uses 022; outer host state and
+            # pre-created synthetic keys stay 0700/0600 under the parent's 077.
+            cwd=root, env=self.env, stdin=subprocess.DEVNULL, stdout=self.log, stderr=self.log,
+            start_new_session=True, umask=self.gateway_umask)
         context = ssl.create_default_context(cafile=str(root / "tls/ca.crt"))
         context.load_cert_chain(str(root / "tls/client/tls.crt"), str(root / "tls/client/tls.key"))
         for _ in range(30):
@@ -455,6 +462,12 @@ print(json.dumps(report, indent=2))
             if remaining:
                 raise RuntimeError(f"owned children remain; preserve {self.root} for cleanup")
         self.results["overlay_paths_before_state_removal"] = [str(p.relative_to(self.root)) for p in self.root.glob("state/**/overlay.ext4")]
+        private_paths = [self.root, self.root / "home", self.root / "tls",
+                         *self.root.glob("tls/**/*.key"), *self.root.glob("tls/jwt/signing.pem")]
+        self.results["host_private_modes"] = {str(p.relative_to(self.root)): f"{p.stat().st_mode & 0o777:03o}"
+                                              for p in private_paths if p.exists()}
+        if any(p.stat().st_mode & 0o077 for p in private_paths if p.exists()):
+            self.results["host_private_mode_failure"] = True
         shutil.rmtree(self.root)
         self.results["state_removed"] = not self.root.exists()
 
@@ -463,10 +476,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence", required=True, type=Path, help="new private output directory; never publish raw logs blindly")
     parser.add_argument("--profile", choices=("stable", "rolling"), default="stable")
+    parser.add_argument("--gateway-umask", choices=("077", "022"), default="077",
+                        help="child-only guest filesystem creation mask; host state stays 0700")
     args = parser.parse_args()
     os.umask(0o077)
     args.evidence.mkdir(mode=0o700, parents=True, exist_ok=False)
-    probe = Probe(args.evidence, args.profile)
+    probe = Probe(args.evidence, args.profile, int(args.gateway_umask, 8))
 
     def interrupted(signum, _frame):
         raise RuntimeError(f"probe interrupted/deadline: signal {signum}")

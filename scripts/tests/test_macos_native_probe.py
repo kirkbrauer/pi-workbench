@@ -1,6 +1,7 @@
 """Host-only tests: no OpenShell, VM, installs, signing or networking."""
 import importlib.util
 import json
+import os
 from pathlib import Path
 import socket
 import ssl
@@ -43,6 +44,25 @@ class MacProbeTests(unittest.TestCase):
         self.assertEqual(rolling.pins_path.name, 'macos-rolling-artifacts.json')
         with self.assertRaises(ValueError):
             probe.Probe(Path('/unused'), 'latest')
+
+    def test_child_umask_preserves_private_host_boundary(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            root.chmod(0o700)
+            key = root / 'synthetic.key'
+            with key.open('w') as stream:
+                os.fchmod(stream.fileno(), 0o600)
+                stream.write('synthetic fixture, not a key')
+            instance = probe.Probe(root, 'rolling', 0o022)
+            self.assertEqual(instance.gateway_umask, 0o022)
+            subprocess.run([sys.executable, '-c', "from pathlib import Path; Path('upper').mkdir()"],
+                           cwd=root, env={'PATH': '/usr/bin:/bin'}, umask=instance.gateway_umask,
+                           check=True, timeout=5)
+            self.assertEqual((root / 'upper').stat().st_mode & 0o777, 0o755)
+            self.assertEqual(root.stat().st_mode & 0o777, 0o700)
+            self.assertEqual(key.stat().st_mode & 0o777, 0o600)
+            with self.assertRaises(ValueError):
+                probe.Probe(root, 'rolling', 0)
 
     def test_checkpoint_failure_never_stops(self):
         events = []
