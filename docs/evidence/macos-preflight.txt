@@ -1,0 +1,113 @@
+Native macOS preflight, 2026-09-06 UTC — BLOCKED BEFORE EXECUTION
+Not worker acceptance; no OpenShell executable/VM was run.
+
+Checkout inspected: 18eb784274d82dbaf668274a5be4558356c5036d
+Checkout tree: 46661192c1a35faeb5556e44733c60d1103490d5
+Branch: feat/t0-macos-native-preflight
+Fetched origin/main: 18eb784274d82dbaf668274a5be4558356c5036d
+Handoff PR #5: OPEN, head f00f7a0c44cd9336828fc13a375810e302a8b6c0
+Handoff content SHA256: 8d5f445699b5fe01461bd1b3ec165f9375ef316750f9eae75c13c43657446a7b
+Documentation edits after inspection are not a newly tested commit.
+
+Inspected repository inputs, SHA256 (not executed):
+08f73a1569527537fa7a671648122363b2018ab62368896d84eecef4a4d8377c config/foundation.json
+08d65b474ea862e8f33deaca74a2f2a37a858bbe19e7a962f01f23947794497e config/native-diagnostic-policy.yaml
+1b53adb2c47f93284eb924b129b5263349bf7f6134616bf1ee715ec2d72ee3ed scripts/native-probe.sh
+61c4e39cc7c99a053d40eb0ca68a13908cdc4174509dedf75913666c124becc8 scripts/guest-runtime-diagnose.py
+Runtime configuration/helper digest: NOT APPLICABLE — not created
+Executed runtime/image: NONE
+
+Host commands: sw_vers; uname -m; sysctl -n kern.hv_support hw.memsize;
+vm_stat; df -h . /private/tmp; memory_pressure; lsof -nP -iTCP -sTCP:LISTEN
+macOS 26.6.1, build 25G76
+architecture arm64
+kern.hv_support 1
+hw.memsize 34359738368
+vm_stat page size 16384, pages free 4941 (initial snapshot)
+memory_pressure system-wide memory free percentage 77% (later snapshot)
+disk available approximately 85 GiB
+18770 listener absent at initial and final inspection; this is not a reservation.
+Existing unrelated listeners left unchanged; no broad process arguments/env dump.
+Podman 5.7.1; existing podman-machine-default Running=false, Starting=false
+Docker CLI 28.5.1; existing com.docker.vmnetd process left unchanged
+No OpenShell/krun/gvproxy/vfkit process found in final ps PID/PPID/comm inspection.
+No OpenShell executables on PATH.
+No e2fsprogs in Homebrew installed-version inventory, no debugfs on PATH.
+/opt/homebrew/opt/e2fsprogs/sbin/debugfs absent.
+/opt/homebrew/bin/mke2fs -> Android platform-tools 36.0.2 mke2fs
+Python 3.14.3; gh 2.100.0
+
+Public official asset SHA256, independently compared to GitHub release metadata:
+Release https://github.com/NVIDIA/OpenShell/releases/tag/v0.0.116
+ e582f2374053bebac8e6aaeb4a369931b7d4bb97bd55055e2c02e85502627e22 openshell-aarch64-apple-darwin.tar.gz
+ f192d3d737c125264e13ef73458541df2ca6a9eb2fa599736a7f2587d5d2ce8d openshell-gateway-aarch64-apple-darwin.tar.gz
+ 8024b8443cfee668b74dce3d348e308d3f576e624ef36af3bc20f79451e96cff openshell-driver-vm-aarch64-apple-darwin.tar.gz
+ cf00a9441589702ffe006720fd6a9dffc0f0745b337036aad26dc53eb94c1558 openshell.rb
+Rolling https://github.com/NVIDIA/OpenShell/releases/tag/vm-runtime
+ 04349e6395c60e8cda059cc74e24105fdd23cec49ceac84966ce7377396e757d vm-runtime-darwin-aarch64.tar.zst
+
+Extracted executable SHA256, all file(1) Mach-O 64-bit executable arm64:
+0baeeffe0e4c184b08fde910ac9e8815fb0b8cfb808e49c0e634d7db65fb03bb openshell
+298706259ef18350f334c222e981e91583558511d50bce22727c689d261203e6 openshell-gateway
+91fde587c0e148b7bd64e18f6fff1ceb95d1c42deee1c00fe7f819dd8830c926 openshell-driver-vm
+
+For each CLI/gateway/driver archive and runtime archive:
+ gh attestation verify <archive> -R NVIDIA/OpenShell --format json
+ result: exit 0 for all four
+Release attestations source: d1155aa70042d3e2ee49dbfa15346b108b7c1d92
+ workflow .github/workflows/release-tag.yml@refs/heads/main
+ https://github.com/NVIDIA/OpenShell/actions/runs/33157063926/attempts/1
+Runtime attestation source: 56088d0811f35d01e5af8f975335c9d0e30524be
+ workflow .github/workflows/release-vm-kernel.yml@refs/heads/main
+ https://github.com/NVIDIA/OpenShell/actions/runs/33026157021/attempts/1
+Both identify self-hosted upstream runners. Provenance is not isolation proof.
+Full JSON retained privately in .local/macos-preflight/evidence/.
+
+Runtime tar provenance.json (inspected without executing libraries):
+ artifact vm-runtime
+ platform darwin-aarch64
+ build_timestamp 2026-08-27T00:24:15Z
+ libkrunfw_commit unknown
+ kernel_version unknown
+ gvproxy_version v0.8.9
+ umoci_version v0.6.0
+ github_sha 56088d0811f35d01e5af8f975335c9d0e30524be
+ github_run_id 33026157021
+Driver-embedded library equivalence: NOT TESTED
+
+codesign --verify --strict --verbose=2 <driver>:
+ valid on disk
+ satisfies its Designated Requirement
+codesign -d --verbose=4 --entitlements :- <driver>:
+ Signature=adhoc
+ TeamIdentifier=not set
+ CDHash=af4e61127589b605163447e5b969b3623569d4b5
+ no entitlement plist emitted
+Repeated with codesign -d --entitlements - <driver>:
+ stdout length 0 bytes (saved as driver-entitlements.plist)
+Pinned official formula post_install signs with com.apple.security.hypervisor=true.
+No re-signing, installer or OpenShell execution performed.
+
+Anonymous GHCR manifest/config inspection (no host registry auth read):
+ ghcr.io/nvidia/openshell-community/sandboxes/base:0.0.116 -> HTTP 404
+ ghcr.io/nvidia/openshell-community/sandboxes/base:v0.0.116 -> HTTP 404
+ Fedora reference sha256:c2a43bb0d765774e2790b3babfb20997bb2eac7b4bf4c6d7d8661e99817bf904
+ -> application/vnd.oci.image.manifest.v1+json (not multi-platform index)
+ -> referenced config os=linux, architecture=amd64
+ Manifest and config body digests checked against references.
+ ARM64 image digest: UNKNOWN; no layers pulled, no image executed.
+
+Required checks attempted via pinned-manager entrypoint:
+ corepack pnpm check
+ corepack pnpm audit --audit-level high
+ corepack pnpm check:hooks
+ All BLOCKED: corepack executable not found. No host pnpm substitution/install.
+ Active Node v25.2.1; inspected nvm versions lack pinned v22.23.2.
+ git config has no core.hooksPath; .git/hooks contains sample files only.
+ Active prepare-commit-msg and pre-push absent; no commit/push attempted.
+
+Private cache directories: current-user owned, mode 0700.
+No synthetic runtime HOME/PKI/DB/overlay created; no VM/gateway cleanup required.
+All guest/lifecycle/security/resource/network predicates NOT TESTED.
+No sudo, package/signing change, service/machine start, host firewall change,
+container fallback, custom OpenShell build, real account enrollment or Tier 1.
