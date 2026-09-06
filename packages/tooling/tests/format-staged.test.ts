@@ -23,6 +23,7 @@ const checkout = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../../../..",
 );
+
 function fixture(t: { after: (fn: () => void) => void }) {
   const root = mkdtempSync(join(tmpdir(), "wb-format-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
