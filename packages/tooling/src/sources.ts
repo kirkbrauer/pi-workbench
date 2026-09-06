@@ -72,5 +72,6 @@ export function checkSources(root: string): void {
     "source preflight pass: exact public registry dependencies; internal references workspace-only; no install hooks",
   );
 }
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)
   checkSources(process.cwd());

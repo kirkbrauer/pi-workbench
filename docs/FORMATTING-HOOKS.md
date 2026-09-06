@@ -73,9 +73,14 @@ missing ones; its configuration schema has no declaration-padding option. The
 configured two-space indentation is unrelated. A direct formatter probe confirmed
 that both adjacent interfaces and blank-line-separated interfaces remain unchanged.
 
-This convention currently needs source review. The staged Biome check does **not**
-enforce it; automatic enforcement would require a separately tested lint rule.
-Do not assume that a green formatter establishes every readability convention.
+The root ESLint configuration now enforces this convention with
+`@stylistic/padding-line-between-statements`. Run `pnpm lint:fix`, then `pnpm format`,
+and review/stage the intended changes. Regression tests cover exported and local
+interfaces, type aliases, functions, and compatibility with Biome. See [LINTING.md](LINTING.md).
+
+The staged hook remains a **Biome formatting-only** check; `pnpm lint` and
+`pnpm check` enforce ESLint across the workspace and in CI. A passing formatting
+hook alone does not imply a passing lint check.
 
 ## Verification and recovery
 

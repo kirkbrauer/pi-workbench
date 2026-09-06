@@ -14,6 +14,7 @@ import { pathToFileURL } from "node:url";
 const LIMIT = 4 * 1024 * 1024;
 const SOURCE = "packages/tooling/src/format-staged.ts";
 const FORMATTABLE = /\.(?:[cm]?[jt]sx?|jsonc?|css|graphql|gql)$/;
+
 function git(root: string, args: string[]): Buffer {
   return execFileSync("git", args, {
     cwd: root,
@@ -21,6 +22,7 @@ function git(root: string, args: string[]): Buffer {
     maxBuffer: LIMIT,
   });
 }
+
 function records(bytes: Buffer): string[] {
   const value = bytes.toString("utf8");
   assert.ok(
@@ -29,9 +31,11 @@ function records(bytes: Buffer): string[] {
   );
   return value.split("\0").filter(Boolean);
 }
+
 function blob(root: string, path: string): Buffer {
   return git(root, ["show", `:${path}`]);
 }
+
 function unchangedConfiguration(root: string, path: string): Buffer {
   const staged = blob(root, path);
   assert.ok(
@@ -40,6 +44,7 @@ function unchangedConfiguration(root: string, path: string): Buffer {
   );
   return staged;
 }
+
 function pins(root: string) {
   const foundation = JSON.parse(
     unchangedConfiguration(root, "config/foundation.json").toString("utf8"),
@@ -180,6 +185,7 @@ export function installFormattingHook(root: string): string {
   }
   return path;
 }
+
 if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
