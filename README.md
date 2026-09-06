@@ -86,7 +86,8 @@ DCO nor agent-created PRs certify Kirk's review.
 ## Layout
 
 - `packages/tooling/src`, `packages/tooling/tests`: real TypeScript foundation tools,
-  including an [offline bundle inventory verifier](docs/BUNDLE-INVENTORY.md).
+  including an [offline bundle inventory verifier](docs/BUNDLE-INVENTORY.md) and
+  [locked dependency planner](docs/BUNDLE-PLAN.md). Bundle assembly is not implemented.
 - [Remote bootstrap requirements](docs/REMOTE-BOOTSTRAP.md): explicit enrollment,
   self-contained artifacts and bounded update authority; no remote installer yet.
 - `pnpm-workspace.yaml`, `pnpm-lock.yaml`: workspace and supply-chain policy/lock.

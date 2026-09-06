@@ -1,22 +1,20 @@
-# Tier 0 review handoff — bundle content verification
+# Tier 0 review handoff — locked bundle dependency plan
 
-## Accepted foundation / current inventory
+## Accepted base
 
-Development continues on **macOS**. Main at the start of this increment is
-`bc9d7a4749a77b0d0ea509faccdbc25597af5837`: native diagnostics (#6), staged formatting
-(#7), and workspace-wide ESLint (#8 carried to main by rebased #9) are merged.
-The complete merged tree matches reviewed ESLint candidate
-`24434f651afa4a5e0fd7fee3cd402a600134d79e`.
+Development continues on **macOS**. Kirk merged inventory-verifier PR #10 on
+2026-09-06 as `5e679feb1ae417e511d673728e27d52968539e10`. This increment starts there
+on `feat/t0-bundle-dependency-plan`, not on an unmerged stack.
 
-[Foundation run 34007347837](https://github.com/kirkbrauer/pi-workbench/actions/runs/34007347837)
-passed for #9, checking synthetic merge
-`d61f7cf4df62b2a9ed127155464d6727abdafb5e`. Hosted results: 21 JS/TS tests passed,
-one real-session hook integration test explicitly skipped; 11 Python tests passed,
-one Mac-system-OpenSSL fixture skipped on Linux. The real-session integration and
-Mac PKI fixture have separate local evidence; do not count skips as passing tests.
-This is prior foundation evidence, not verification of the new bundle code.
+Prior [Foundation run 34009626908](https://github.com/kirkbrauer/pi-workbench/actions/runs/34009626908)
+passed for candidate `6c37e0ce4c333b6f3ed3c7093e6483be5a0528e9`, synthetic merge
+`2f2498be061184a080ba5df20d8ce8184b50e78e`. Runner image: ubuntu-24.04,
+20260831.293.1; Node 22.23.2. JS/TS: 36 passed, one actual-session hook integration
+skip. Python: 11 passed, one Mac-system-OpenSSL skip. This is baseline evidence,
+not validation of the new planner. Native diagnostics, formatting and ESLint were
+already merged; see [BOARD.md](BOARD.md).
 
-Unchanged baseline inputs:
+Unchanged input identities:
 
 | Input | SHA-256 |
 |---|---|
@@ -26,85 +24,71 @@ Unchanged baseline inputs:
 
 ## This increment
 
-Branch `feat/t0-bundle-inventory`, based directly on merged main (no open stack base).
+- `packages/tooling/src/bundle-plan.ts`: offline lock-graph projection for an
+  explicit Pi + declared foundation-tooling dependency seed profile.
+- `packages/tooling/tests/bundle-plan.test.ts`: 13 focused tests, including actual
+  locked platform payloads, required/optional/peer failures and resource budgets.
+- `bundle:plan` root command and [BUNDLE-PLAN.md](BUNDLE-PLAN.md) usage/contract.
+- Exposes/reuses the inventory verifier's existing bounded metadata reader. Its
+  file checks and inventory format are unchanged; existing tests remain intact.
+- No dependency/lock change, downloader, artifact unpacking, native binary execution,
+  remote installer, runtime policy, CI rule or attribution-hook change.
 
-- Records Kirk's [accepted runtime limitations](ACCEPTED-RUNTIME-LIMITATIONS.md):
-  Landlock unavailable and raw-stop data loss. Original evidence/checks remain intact.
-- Refreshes the [board](BOARD.md) and versions accumulated
-  [remote bootstrap requirements](REMOTE-BOOTSTRAP.md).
-- Introduces `packages/tooling/src/bundle-inventory.ts` and focused synthetic tests.
-  It inventories and compares staged bytes/modes against an external expected
-  inventory digest/platform, without fetching, extracting, executing or installing.
-- Adds `bundle:inventory` / `bundle:verify` root scripts. No dependency, lockfile,
-  CI policy, lint rule, runtime configuration or attribution-hook change.
+The actual graph contains platform esbuild and clipboard packages, and explicitly
+unbound optional peers. Darwin retains both compatible clipboard variants; it is
+not safe to prune one by filename intuition. A graph with 129 Darwin/128 Linux
+snapshots is **not** a complete runtime SBOM. Node archive identity, tarball bytes,
+manifests/licenses, bundled dependency contents, helper/native libraries and exact
+OS baselines still need verification. Existing checkout-oriented development tools
+also require deliberate entrypoint selection before calling anything standalone.
 
-Review [BUNDLE-INVENTORY.md](BUNDLE-INVENTORY.md) for the exact contract and commands.
-The inventory's component versions/sources are declarations bound to bytes, not
-attestations or dependency-closure proof. The caller must supply an independently
-trusted expected digest; computing a digest of untrusted input does not approve it.
+## Review focus
 
-## Verification for this candidate
+1. Peer-context identity and graph traversal: required edges cannot be dropped;
+   compatible optionals are retained; incompatible optional edges remain visible;
+   no ambient or registry resolution repairs missing entries.
+2. Scope of evidence: SRI and URLs identify declared inputs, not inspected bytes or
+   publisher trust. Peer/engine ranges and context-to-binding semantics remain
+   unvalidated. The plan's caller-supplied source SHA is not a Git attestation.
+3. Failure/limit behavior: duplicate/aliased/tagged YAML, unsupported resolution
+   forms/fields, unsafe identities, missing nodes and metadata amplification fail.
+   This is ordinary host tooling for trusted stationary inputs, not a broker or
+   hostile-filesystem boundary. No check was relaxed for the new code.
 
-Use the approved pinned toolchain, not the running host Pi/Node installation:
+## Candidate verification
+
+Use the already approved pinned Node 22.23.2 / Corepack 0.34.6 / pnpm 11.25.0:
 
 ```sh
 pnpm check
 pnpm audit --audit-level high
 pnpm check:hooks
-# The normal workspace suite includes the new synthetic inventory tests.
-# Optional focused repetition after build:
-node --test packages/tooling/dist/tests/bundle-inventory.test.js
+node --test packages/tooling/dist/tests/bundle-plan.test.js
+# Read-only plans; supply the actual source SHA and new intended output paths:
+pnpm --silent bundle:plan darwin-arm64 SOURCE_SHA > NEW_MAC_PLAN.json
+pnpm --silent bundle:plan linux-x64-gnu SOURCE_SHA > NEW_LINUX_PLAN.json
 ```
 
-Candidate SHA, source/configuration digests, exact test outcomes and hosted merge
-SHA are attached to the PR after commit. They cannot be self-bound to this file's
-own future commit. No new native VM/image or remote runtime was used: image is
-**not applicable to these host-side synthetic tests**, not an unknown successful
-worker image. Runtime is pinned Node 22.23.2; tests run locally on macOS arm64 and
-independently on the hosted Linux runner. New hosted evidence is required before
-completion; the earlier #9 run alone is insufficient.
+Exact committed SHA, input/source/output digests, local outcomes and fresh hosted
+merge/image identities are attached to the PR after commit. Earlier #10 CI does
+not validate this increment. No worker VM/image is applicable to these host-side
+synthetic/metadata tests. Cross-target planning on macOS is not a Linux runtime
+smoke test. Hosted Linux repeats the tool's tests, not a packaged Pi launch.
 
-Most important review points:
+## Remaining gates / next steps
 
-1. Only operator-owned, stationary, local POSIX staging trees are supported.
-   `O_NOFOLLOW` covers the final path component, not hostile parent replacement;
-   nonblocking opens reject FIFO substitution without claiming race-free traversal.
-2. Exact canonical metadata, size/count/depth/mode/link checks and failure fixtures;
-   component/source declarations must not be confused with a trusted release/SBOM.
-3. No install/approval/activation or payload execution side effects. Existing native
-   acceptance probes and supply-chain checks are not weakened to accommodate this tool.
+[Accepted runtime limitations](ACCEPTED-RUNTIME-LIMITATIONS.md) remain scoped:
+Landlock absence and raw-stop loss are observed failures accepted by Kirk, not
+passing tests. Guest PID controls, aggregate Mac host quotas and broad credential/
+filesystem/network qualification remain unresolved. No untrusted worker is admitted.
+Native helper `bf4a177bb407642b6e452937d687971a36285d96` and exact runtime/image/config
+identities remain in [Mac evidence](evidence/macos-e2e.txt) and
+[Fedora evidence](evidence/native-spike.txt); these runs were not repeated here.
 
-## Remaining native qualification
-
-Native unmodified OpenShell demonstrated mTLS status/exec, workspace writes and
-cooperative checkpoint/restart on Fedora and Mac. Mac stable 0.0.116 and rolling
-0.0.117-dev.82+gb9c7d5c70 used tested helper
-`bf4a177bb407642b6e452937d687971a36285d96`; exact runtime/image/configuration hashes
-remain in [Mac bound evidence](evidence/macos-e2e.txt). Fedora identities remain in
-[its bound evidence](evidence/native-spike.txt). These runs were not repeated here.
-
-Landlock absence/raw-stop loss are now accepted limitations, **not passing tests**.
-Guest PID enforcement, aggregate Mac host quotas, broad credential/filesystem/
-network conformance and actual development userspace in the native VM remain
-unqualified. Strict Landlock startup remains unsupported. No real account/provider
-enrollment, broker, worker, workflow engine or UI is introduced or admitted.
-
-Host security, workloads and attribution hooks remain unchanged. Native disposable
-VMs, overlays, gateways and synthetic PKI/JWT/DB were removed after their runs.
-Never transfer `.local/`, auth caches, host HOME, SSH/engine/approval sockets or
-synthetic gateway state to Fedora/worker contexts. Preserve unpublished source.
-
-## Next review-sized steps
-
-1. Review/merge this content-checking primitive and scoped decision record; no
-   agent merge/enqueue or automatic tier acceptance.
-2. Propose a reproducible per-platform bundle builder: exact Node/Pi/Workbench
-   inputs, complete runtime dependency/SBOM/native-library closure, validated output
-   layout and offline smoke tests under hostile ambient search paths. Nothing is
-   downloaded or installed merely by accepting the present metadata schema.
-3. Separately review safe extraction/staging, interruption handling, verification
-   and activation/rollback on disposable local fixtures. This tool does not secure
-   archive extraction or close the verification-to-use race.
-4. Only after a concrete approved host/account/profile/key/install plan, consider
-   remote seeding. SSH reachability is not enrollment. Durable remote Pi jobs and
-   credentialed workers remain later-tier scope with their own review/qualification.
+After review/merge, collect/verify exact archive bytes and package metadata, then
+implement reproducible materialization/assembly and offline no-model runtime tests.
+Do not mistake inspected installed packages for SRI-verified source archives or a
+successful planner for a ready release. Safe extraction, activation/rollback and
+real host/account/key enrollment remain separately reviewed increments under
+[REMOTE-BOOTSTRAP.md](REMOTE-BOOTSTRAP.md). Preserve host tools, workloads, hooks,
+credentials and unpublished source. No agent merge/enqueue or inferred tier acceptance.

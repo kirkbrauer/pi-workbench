@@ -3,8 +3,9 @@
 ## Current inventory — 2026-09-06
 
 **Tier 0; development continues on macOS. No broker, worker, UI or workflow engine.**
-Merged baseline: `bc9d7a4749a77b0d0ea509faccdbc25597af5837` (PRs #1–#3, #6, #7 and
-ESLint #8 carried to main by #9). PR #5 was superseded/closed. The #8/#9 stack is
+Merged baseline: `5e679feb1ae417e511d673728e27d52968539e10` (PRs #1–#3, #6, #7,
+ESLint #8 carried to main by #9, and inventory verifier #10). PR #5 was
+superseded/closed. The #8/#9 stack is
 fully reconciled; no formatting/lint increment remains waiting on an old base.
 
 Native OpenShell diagnostic execution works on Fedora x86_64/KVM and macOS
@@ -17,14 +18,15 @@ resource and credential/boundary qualification does not permit untrusted workers
 |---|---|---|---|
 | T0-01 / 0 | Pinned Corepack/pnpm TypeScript monorepo and dependency policy | merged, #1 | Exact versions, frozen/no-script installs, source/age/integrity/audit gates; maintain pins |
 | T0-02 / 0 | Preserve/exercise upstream attribution | merged, #1 | Hash checks and real-session commit/push/intentional-refusal fixtures; preserve identity/hooks |
-| T0-03 / 0 | Hosted foundation and forge gates | merged | PR/merge-group workflow; #9 run 34007347837 passed; personal-owner merge queue unsupported, not tested |
+| T0-03 / 0 | Hosted foundation and forge gates | merged | PR/merge-group workflow; #10 run 34009626908 passed; personal-owner merge queue unsupported, not tested |
 | T0-04 / 0 | Native OpenShell diagnostics on Fedora and Mac | merged, #2/#3/#6 | Real VM + mTLS exec + workspace write + cooperative checkpoint/restart; not worker qualification |
 | T0-05 / 0 | Worker resource and credential/boundary qualification | blocked | Guest PID budget absent; broad credential/network conformance and in-VM development userspace unverified; two scoped limitations accepted, not blanket waiver |
 | T0-06 / 0 | Full tier acceptance/recovery | blocked | Foundation merges observed; remaining required evidence and Kirk's tier review still apply |
 | T0-07 / 0 | Partial-staging-safe formatting hook | merged, #7 | Installed locally; Biome index-blob check chained through untouched attribution; real-session tests passed |
 | T0-08 / 0 | Root ESLint policy/declaration spacing | merged, #8 via #9 | Five regression tests; Biome formatting + JS/TS recommended rules; compiler 7.0.2 with isolated supported parser dependency 6.0.3 |
-| T0-09 / 0 | Offline bundle content inventory/verification | candidate, this increment | Canonical metadata, external expected digest/platform, exact bytes/modes, bounded scans and rejection fixtures; no installer or payload execution |
-| T0-10 / 0 | Self-contained platform bundle builder | next proposal | After verifier review: complete dependency/SBOM/native-library closure, pinned inputs, no ambient resolution and offline smoke evidence |
+| T0-09 / 0 | Offline bundle content inventory/verification | merged, #10 | Canonical metadata, external expected digest/platform, exact bytes/modes, bounded scans and rejection fixtures; no installer or payload execution |
+| T0-10a / 0 | Locked bundle dependency plan | candidate, this increment | Deterministic per-platform graph, preserved peer contexts, explicit exclusions/missing qualification; 13 new tests; no assembly or complete SBOM claim |
+| T0-10b / 0 | Self-contained platform bundle builder | next proposal | Verified artifact bytes, manifests/licenses/native-library closure, selected distributable entrypoints, reproducible assembly and offline smoke evidence |
 | T0-11 / 0 | Staging/install/activation and enrolled updates | requirements only | Separate reviewed increments after artifact qualification; no host enrollment, key mutation, service or remote execution granted |
 
 ## Native evidence and accepted limitations
@@ -52,8 +54,11 @@ not host enrollment, selected-key lifecycle qualification or remote Pi control.
 [REMOTE-BOOTSTRAP.md](REMOTE-BOOTSTRAP.md) records new-host/account/profile/key
 approval, complete platform bundles, scoped automatic extension updates, offline
 verification and safe activation/rollback requirements. [BUNDLE-INVENTORY.md](BUNDLE-INVENTORY.md)
-defines only the first content-checking primitive; claimed versions/origins are not
-a complete SBOM, publisher trust, dependency closure or approval service.
+defines the first content-checking primitive; [BUNDLE-PLAN.md](BUNDLE-PLAN.md)
+adds a lock-graph projection for Pi and declared foundation-tooling dependencies.
+Darwin selects 129 snapshots, Linux 128, including native platform packages. Neither
+a content inventory nor a lock projection proves a complete runtime SBOM, publisher
+trust, native-library closure or approval. Real bundle assembly remains pending.
 
 ## Review/evidence discipline
 

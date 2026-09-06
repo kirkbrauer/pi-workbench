@@ -4,7 +4,9 @@
 staging directory. **Not implemented:** a release builder, complete dependency
 SBOM, archive extraction, installer, publisher verification, approval, activation,
 rollback, remote transfer or Pi execution. See [REMOTE-BOOTSTRAP.md](REMOTE-BOOTSTRAP.md)
-for the larger requirements; those remain separate increments.
+for the larger requirements; those remain separate increments. The
+[locked dependency planner](BUNDLE-PLAN.md) now provides the first builder input,
+not a complete SBOM or materialized bundle.
 
 ## Contract
 
