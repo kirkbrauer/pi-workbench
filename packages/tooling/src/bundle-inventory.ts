@@ -429,7 +429,8 @@ export function verifyBundleDirectory(
   return inventory;
 }
 
-function metadata(path: string): Buffer {
+/** Bounded regular-file metadata input; final-component links/special files fail. */
+export function readBundleMetadata(path: string): Buffer {
   const fd = openReadOnly(path);
   try {
     const stat = fstatSync(fd);
@@ -471,14 +472,17 @@ if (
     assert.ok(digest === undefined && platform === undefined);
     process.stdout.write(
       serializeInventory(
-        inventoryDirectory(root, JSON.parse(metadata(file).toString("utf8"))),
+        inventoryDirectory(
+          root,
+          JSON.parse(readBundleMetadata(file).toString("utf8")),
+        ),
       ),
     );
   } else {
     assert.ok(action === "verify" && digest && platform);
     const result = verifyBundleDirectory(
       root,
-      metadata(file),
+      readBundleMetadata(file),
       digest,
       bundlePlatform(platform),
     );
