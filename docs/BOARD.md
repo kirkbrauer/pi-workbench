@@ -14,6 +14,18 @@ Kirk merged foundation PR #1 on 2026-09-05 as
 | T0-05 / 0 | Boundary, bounded resources, lifecycle | T0-04 | blocked | feat/t0-runtime-preflight / follow-up | Guest PID limit absent; Landlock unavailable; marker lost on restart; network/corporate CA tests unknown | Investigate upstream/runtime gaps in a separately bounded follow-up, without weakening predicates |
 | T0-06 / 0 | Tier acceptance and recovery | T0-01–05 | blocked | Tier 0 | Foundation human merge observed, but mandatory sandbox predicates fail | Review follow-up; do not unlock Tier 1 |
 
+## Native best-effort follow-up
+
+`feat/t0-native-runtime-spike` is stacked on open PR #2 (`ac96b2b`), still Tier 0.
+Kirk requested no OpenShell changes. The result is a restricted synthetic
+**diagnostic** profile: explicit empty network allowlist, bounded CLI operations,
+sync-before-stop with independent raw-stop failure retained, and three host-only
+helper tests. Native Landlock and PID enforcement remain unavailable; strict
+startup stalls in Provisioning. No worker admission or implicit Podman fallback.
+See [NATIVE-RUNTIME-SPIKE.md](NATIVE-RUNTIME-SPIKE.md) and its bound evidence.
+The #2 development-image build, clean clone and Actions results are attached to
+that PR (Actions 33999586708); no repeat native/image acceptance is inferred.
+
 ## Scoped discoveries
 
 - JFrog/Curation profile planning + certificate-only validation implemented with

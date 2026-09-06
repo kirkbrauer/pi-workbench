@@ -1,5 +1,10 @@
 # Native Fedora OpenShell probe — NOT qualified for workers
 
+For the subsequent **unmodified-runtime, trusted-diagnostic-only** profile,
+explicit empty network allowlist, checkpoint workaround and current blockers,
+see [NATIVE-RUNTIME-SPIKE.md](NATIVE-RUNTIME-SPIKE.md). The hashes below bind the
+original run, not later helper changes.
+
 ## Observed run (2026-09-05)
 
 Native libkrun/KVM OpenShell **0.0.116** booted and executed a diagnostic through

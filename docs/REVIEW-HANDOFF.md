@@ -1,6 +1,23 @@
 # Tier 0 follow-up review handoff
 
-## Outcome
+## Current stacked follow-up: native best effort
+
+Branch `feat/t0-native-runtime-spike` depends on open PR #2 at `ac96b2b`. Kirk
+explicitly requested **no changes to OpenShell**, then best effort within that
+constraint. Review [NATIVE-RUNTIME-SPIKE.md](NATIVE-RUNTIME-SPIKE.md),
+`config/native-diagnostic-policy.yaml`, and `scripts/native-probe.sh` closely:
+filesystem/PID limitations remain, checkpoint-stop is cooperative rather than
+atomic, and strict startup times out in Provisioning. Original failure predicates
+are retained. No privileged host changes, custom runtime or backend substitution.
+
+Local verification: 10 TypeScript tests, three fake-CLI helper tests, syntax,
+lint/type/build/policy, hook hashes and audit passed. Native marker checkpoint
+passed, raw stop/PID checks still failed, and limited network denial was observed.
+Both disposable VMs and synthetic PKI were removed, service inactive. Exact
+helper/policy/config hashes and outputs are in `evidence/native-spike.txt`; PR
+publication/CI result follows the committed candidate. Full Tier 0 stays blocked.
+
+## Prior PR #2 outcome
 
 - Remaining Tier 0 only: registry/CA planning, reusable setup/diagnostic helpers,
   reproducible toolchain image and honest native-VM acceptance evidence.
