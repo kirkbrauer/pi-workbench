@@ -1,6 +1,30 @@
 # Tier 0 follow-up review handoff
 
-## Current stacked follow-up: native best effort
+## Current handoff: native diagnostics work on Fedora and macOS
+
+**Continue working on macOS** per Kirk's latest direction. The prepared
+[FEDORA-HANDOFF.md](FEDORA-HANDOFF.md) is for a possible later return, not an
+active host migration. Both native legs now demonstrate authenticated exec, workspace writes, cooperative
+checkpoint/restart and cleanup using synthetic data. Mac stable **0.0.116** and
+rolling **0.0.117-dev.82+gb9c7d5c70** passed that diagnostic sequence at
+`bf4a177bb407642b6e452937d687971a36285d96`; see [MACOS-E2E.md](MACOS-E2E.md)
+and [bound evidence](evidence/macos-e2e.txt).
+
+The Mac helper's inherited umask made the guest overlay root 0700/host-owned.
+Child-only 022 fixes traversability while outer host state and keys stay private.
+OpenShell remains unmodified except upstream's documented disposable-driver
+Hypervisor signing. Rolling alone did not fix startup; stable works too.
+Landlock ENOSYS (Mac), missing guest PID budget, raw-stop data loss and strict
+Provisioning timeout remain. No Tier 1 or untrusted-worker acceptance.
+
+Fetched main is `18eb784274d82dbaf668274a5be4558356c5036d` (PRs #1–#3 merged).
+Mac work is on `feat/t0-macos-native-preflight`; preserve attribution hooks and
+human review. Mac gateways/VMs/overlays/PKI/DB are removed. Do not transfer `.local/`
+or apply Mac host setup to Fedora. Nine Mac helper tests, foundation checks/audit
+and real-session hook tests passed; Fedora-only helper tests need their Linux
+boundary. No new hosted CI/clean-clone result or full tier acceptance is claimed.
+
+## Prior stacked follow-up: native best effort (historical)
 
 Branch `feat/t0-native-runtime-spike` depends on open PR #2 at `ac96b2b`. Kirk
 explicitly requested **no changes to OpenShell**, then best effort within that

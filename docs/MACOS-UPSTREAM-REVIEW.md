@@ -1,5 +1,10 @@
 # macOS upstream review — 2026-09-06 UTC
 
+**Follow-up:** the subsequently authorized rolling test and stable control both
+achieved native diagnostic E2E after the child-umask correction described below.
+See [MACOS-E2E.md](MACOS-E2E.md). This read-only review records what was known
+before those runs; its then-unresolved startup conclusion is superseded.
+
 Read-only upstream review after the native diagnostic at
 `703a453330d2aff32d727018bc14e2bbf611fcd4`. No runtime, image, package or policy
 was upgraded during this review. Native evidence remains bound to its tested

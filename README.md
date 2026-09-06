@@ -2,8 +2,16 @@
 
 A **TypeScript monorepo** for composable Pi engineering tools with a separately
 trusted execution broker. **Tier 0 in progress; no worker, UI or broker yet.**
-Native Fedora OpenShell MicroVM diagnostic execution works, but mandatory
-isolation/resource/persistence checks fail; no untrusted worker is admitted.
+**Native OpenShell MicroVM diagnostic execution works on both Fedora Linux
+(x86_64/KVM) and macOS (Apple Silicon/Hypervisor.framework).** Authenticated exec,
+workspace writes and cooperative checkpoint/restart are demonstrated with
+synthetic data. Mandatory isolation/resource/raw-stop persistence checks still
+fail; no untrusted worker is admitted.
+
+See [Fedora evidence](docs/NATIVE-RUNTIME-SPIKE.md),
+[macOS E2E evidence](docs/MACOS-E2E.md), and the
+[prepared Fedora handoff](docs/FEDORA-HANDOFF.md).
+**Current development continues on macOS**; the Fedora handoff is a future reference.
 
 ## Setup (trusted foundation checkout)
 

@@ -1,5 +1,9 @@
 # Native macOS synthetic diagnostic
 
+**Current result: native E2E diagnostics work on stable and rolling.** See
+[MACOS-E2E.md](MACOS-E2E.md) for results and the corrected command using
+`--gateway-umask 022`. The setup/initial-failure history below is retained.
+
 Tier 0 only. Unmodified OpenShell 0.0.116 release code, with upstream's documented
 ad-hoc Hypervisor entitlement applied to a disposable driver copy. No custom
 kernel, source rebuild, container backend, real credentials or worker admission.
@@ -63,7 +67,7 @@ still triggers explicit deletion. No failure is silently changed into success.
 
 ```sh
 python3 -B -m unittest discover -s scripts/tests -p 'test_macos_native_probe.py' -v
-python3 -B scripts/macos-native-probe.py --evidence .local/macos-run-001
+python3 -B scripts/macos-native-probe.py --profile stable --gateway-umask 022 --evidence .local/macos-stable-next
 ```
 
 Output directory must not already exist. Raw private logs are capped to 128 KiB
@@ -108,5 +112,7 @@ is retained. **No TLS verification flags were relaxed.** Certificate errors now
 fail immediately instead of repeating until the readiness deadline. A sixth
 host test verifies this synthetic PKI with strict mutual TLS; all six passed.
 
-Native execution results follow separately; setup and host tests are not a VM
-boot or security acceptance claim.
+Native execution results are now in [MACOS-E2E.md](MACOS-E2E.md). Stable and
+rolling both run the diagnostic sequence with gateway-child umask 022; missing
+Landlock/PID controls and raw-stop persistence failures remain. The current Mac
+host-only suite has nine tests. Return-host instructions: [FEDORA-HANDOFF.md](FEDORA-HANDOFF.md).

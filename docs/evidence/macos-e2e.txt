@@ -1,0 +1,150 @@
+Native macOS E2E diagnostic SUCCESS — 2026-09-06 UTC
+Not full worker qualification. Stable AND rolling run commands end-to-end.
+Earlier failures retained in macos-native.txt and private comparison outputs.
+
+TEST BINDING
+Workbench tested SHA: bf4a177bb407642b6e452937d687971a36285d96
+Helper SHA256: b102e6d8aecf3aea28ba9c469f2a018b33f3b3cda7c5658a28fabb074b1e9b2e
+Mac helper tests SHA256: 12d6645159f3ef393115cca3e55b0a5ff94ca3feedd4b3e224d40fca3f87f30f
+Stable pin config SHA256: a97950f76a13d520973ec82df2c06c6e8ac5a1e7bce6951712d99009512a5b17
+Rolling pin config SHA256: 36fa2c2969c8b4b205529925c30b37947b9bb43a1bd6b317a69a06479bf9f60f
+Diagnostic policy SHA256: 08d65b474ea862e8f33deaca74a2f2a37a858bbe19e7a962f01f23947794497e
+Strict policy SHA256: c49c4f76b46aab301ef6827c7f077800ecfaa95ece69630d66efebe61c40ed2f
+Guest probe SHA256: 61c4e39cc7c99a053d40eb0ca68a13908cdc4174509dedf75913666c124becc8
+Synthetic PKI extension config SHA256: e6697814d81da5d0bf571b882b51139d3fdaaf69bd115412d872c5330088cfb4
+Host: macOS 26.6.1 build 25G76, arm64, kern.hv_support=1
+Gateway child umask: 022; parent/state creation umask: 077
+
+Commands:
+ python3 -B scripts/macos-native-probe.py --profile rolling --gateway-umask 022 --evidence .local/macos-rolling-run-002
+ python3 -B scripts/macos-native-probe.py --profile stable --gateway-umask 022 --evidence .local/macos-stable-control-001
+
+Rolling generated gateway.toml SHA256:
+ 9dceb1699afae9f2ed93e0e0caf0e83c0bf0cd72b88a448ea7ad1c7fb200e5ad
+Stable generated gateway.toml SHA256:
+ 33e1d084625b2af19ba5503b6d1330220ac73154c72025e950520445a078f472
+Rolling synthetic public cert SHA256:
+ CA b2ae6df5cc64dcaa3640d058a67ea8fee34066e50ce96d9fb016ab9060aff239
+ server 2cf5db21fb5cd00cdce531a69db684beb96e647859963ca6f9d623f766bf3288
+ client e63ce68f90be4973547c1e629d8481528e455a445602d81711c7331dc98421aa
+Stable synthetic public cert SHA256:
+ CA 77fcfcea31830f1fe79366330065496c420a997e147fc0f3dd3efbbff17776b5
+ server 254f982860cf935c05cd2828b9dfe391a89990c55f7363e10ee34d7eef1bff31
+ client 18e592e2fbbeddc6f31691d09dd77d6727289657539186f95516b861eb19b872
+All synthetic private keys/JWT/DB/overlays removed, none published.
+
+ARTIFACTS / PROVENANCE
+Stable: OpenShell 0.0.116, source d1155aa70042d3e2ee49dbfa15346b108b7c1d92.
+Archive hashes/attestations: macos-preflight.txt; executed binary hashes: macos-native.txt.
+Rolling: all three binaries report 0.0.117-dev.82+gb9c7d5c70.
+Published source b9c7d5c7070e31fddb156b5051cc1d9f4882a89b,
+https://github.com/NVIDIA/OpenShell/actions/runs/33985485730/attempts/1 (success).
+The newer main 320d4ef79dd572c642133f175f12bafc20d89fd9 release workflow
+33985500766 failed Docker E2E and skipped publication; dev is NOT current main.
+Rolling archive SHA256:
+ CLI b0988d9ecb754a4e230a3af019f89ad155729201df0b0146b0b589eb5e7f608e
+ gateway 5c141500908c23ed107aea792a5c29655109d816b430a19c07974a01264a72a5
+ driver 57ccbec1d5b91cdfc420ed996b5f84f066f5ced64156a46360506f7fc5db5153
+Rolling executed binary SHA256:
+ CLI e94b377b037973b26b448d206197a90ac354ddb4e015d72102097919fb6b45b3
+ gateway 041a2888b4802887a384889044f0f0faabbd71b8c40edf173526d863880f817b
+ driver 4472a53d3546596d49aa9598c665db0d32ce8191372c1c9f30b4021d7f32de2e
+Rolling original driver SHA256 (preserved):
+ 9cef07a24828964f31e49d1af4bf338b407a4bd75f5c3821f939c89fb99e36ca
+Only documented Hypervisor ad-hoc signing on a disposable copy; no source/runtime patch.
+Rolling driver gh attestation verify passed, bound to source/run above.
+Rolling CLI/gateway attestation lookups returned HTTP 404. The exact published
+release-dev.yml attests only VM drivers. Their GitHub asset hashes were verified;
+no equivalent CLI/gateway attestation or stronger provenance claim is made.
+Stable CLI/gateway/driver archive attestations all passed.
+
+Both profiles' extracted runtime members match the attested rolling runtime archive
+04349e6395c60e8cda059cc74e24105fdd23cec49ceac84966ce7377396e757d:
+ libkrun.dylib 81034d53b78adec4a47800957d51f5fa832ffed2841847b5b75209b73f6d4ac4
+ libkrunfw.5.dylib 5598f091ac03d6f2030869e47bfda30c4e80c2235f414d19f724a6aa0f2f6d0c
+ gvproxy c6f7b4bc7f21bf810b5cf54e04d979b014c5d96472a03a9e97fe62a00940067c
+Runtime provenance still labels kernel/libkrunfw revision unknown, but guest kernel
+is now directly observed as 6.12.76. Provenance is not security qualification.
+
+Image for both default/bootstrap, platform inspected linux/arm64:
+ ghcr.io/nvidia/openshell-community/sandboxes/base@sha256:04dd51f785ae52557ac53d4b12b3a0611a7347e5b8738e6278203465e6fb726e
+ Config sha256:bcf4897ab8f95ec875847998297da98d16a44c8741c62c738d917f0eb8d35097
+ No mutable tag execution, container fallback, host mount or credential enrollment.
+
+CONTROLLED PERMISSION COMPARISON
+Rolling original-mask run .local/macos-rolling-run-001:
+ checkout 7577921743a2a291d77cd3965646b5ae6ac52b9b
+ helper fb13423d7e97c9bc738703410dd92f4b1e9f960ffa5c666292aee3a95af59e47
+ config d7cb19fd086902e9f1d45aca1fedc1b0f33c1093d2c3284a569d33e578ba5289
+ umask 077, diagnostic create exit 124, Phase Provisioning
+ debugfs stat /upper: Mode 0700 User 501 Group 0
+ debugfs stat / (immutable lower disk): Mode 0755 User 0 Group 0
+Rolling corrected-mask run:
+ same binaries, image, policy, vCPUs, RAM and overlay size
+ gateway child umask 022, diagnostic create exit 0, Phase Ready
+ debugfs stat /upper: Mode 0755 User 501 Group 0
+Stable corrected-mask control: same successful diagnostic outcome.
+The exact exec EACCES errno was NOT logged; permission cause supported by inode
+metadata and controlled startup result. Guest upper-root ownership is not repaired.
+
+OBSERVED IN BOTH SUCCESSFUL PROFILES
+Explicit vm backend; sole gateway listener 127.0.0.1:18770.
+Authenticated mTLS registration/status/exec; no-client-cert curl exit 56 with
+server log "peer sent no certificates". Strict Python TLS validation retained.
+No providers; only synthetic PKI/JWT material. Guest commands sleep/Python/sync.
+Guest uname: Linux 6.12.76 aarch64; UID 998; 2 online vCPUs.
+Rolling MemTotal: 2037876 kB (2 GiB configured); overlay file 4294967296 bytes.
+Guest synthetic host fixture and /Users/kirk absent, selected engine sockets absent,
+SSH_AUTH_SOCK/DOCKER_HOST/CONTAINER_HOST absent; /sandbox synthetic write/read passed.
+This establishes narrow path checks, not full isolation or arbitrary identity safety.
+Capabilities Inh/Prm/Eff/Bnd/Amb: all 0000000000000000.
+NoNewPrivs=1, Seccomp=2, Seccomp_filters=3.
+Cgroup placement 0::/; controllers "cpuset cpu io memory pids";
+subtree_control empty; pids.max absent. Guest PID budget FAIL.
+Landlock syscall query: abi=-1 errno=38 (ENOSYS). Landlock FAIL.
+/sys/kernel/security/lsm and /proc/config.gz unavailable.
+Guest example.com HTTPS: urllib reports "Tunnel connection failed: 403 Forbidden".
+ Helper records this under proxy_unknown because urllib wraps CONNECT denial;
+ the observed 403 is retained, not silently transformed into full policy success.
+Guest direct TCP 1.1.1.1:443: errno 111 Connection refused.
+Host example.com HTTPS HEAD: HTTP/2 200, exit 0.
+No comprehensive direct-egress, allowed-policy, rebinding or corporate-CA claim.
+
+LIFECYCLE EXACT ASSERTIONS
+Rolling raw stop:
+ before 123cd715-16f8-4784-8abe-ae6ecedd0194
+ after  fcea9118-9351-41f8-ae06-f9caa329b70f
+ exit 1, AssertionError: marker disappeared. FAIL retained.
+Rolling cooperative checkpoint:
+ before fcea9118-9351-41f8-ae06-f9caa329b70f
+ after  5bc00d00-9173-4cd0-9903-b6ef7ef6831b
+ exit 0, exact marker and changed boot PASS.
+Stable raw stop:
+ before 2c155dac-0893-4384-b813-f60f8fd67c89
+ after  538641e3-af39-4fd1-bf2c-557ca749bc68
+ exit 1, AssertionError: marker disappeared. FAIL retained.
+Stable cooperative checkpoint:
+ before 538641e3-af39-4fd1-bf2c-557ca749bc68
+ after  21b241c9-ac1d-4f41-abb1-2d98b20fc959
+ exit 0, exact marker and changed boot PASS.
+Checkpoint runs guest sync before stop. Not atomic, no concurrent-writer or crash guarantee.
+Both strict-policy probes: create exit 124 at 60s, Phase Provisioning;
+Landlock unavailable reported, no policy downgrade or clean terminal-failure claim.
+
+CLEANUP / VALIDATION
+Each sandbox explicitly deleted; final sandbox list empty.
+Both runs: remaining_group=[], overlay_paths_before_state_removal=[], state_removed=true.
+Private runtime roots /private/tmp/wbm-lblm6cjw and /private/tmp/wbm-e1vtspy4 absent.
+Host modes before deletion, both profiles:
+ outer root=700, home=700, tls=700
+ tls/ca.key=600, tls/server/tls.key=600, tls/client/tls.key=600, tls/jwt/signing.pem=600
+Final process/port checks: no OpenShell/krun/gvproxy/vfkit or listener on 18770.
+Existing Podman machine stopped. Original Android mke2fs symlink unchanged.
+No new service, OS upgrade, firewall change or real account enrollment.
+Ignored public artifact/toolchain caches and private bounded logs remain.
+Evidence scan: no private-key PEM or compact JWT patterns; scan not exhaustive.
+Final documentation candidate verification: nine Mac helper tests and ten
+TypeScript tests PASS; pnpm check, pnpm audit --audit-level high (no known
+vulnerabilities), pnpm check:hooks and actual-session pnpm test:hooks PASS.
+No native rerun is inferred from later documentation commits.
+Full Tier 0/worker qualification remains BLOCKED despite working native diagnostics.
