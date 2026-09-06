@@ -25,6 +25,7 @@
     "check:commits": "node packages/tooling/dist/src/commits.js",
     "audit": "pnpm audit --audit-level high",
     "outdated": "pnpm -r outdated",
+    "workbench": "node packages/core/dist/src/cli.js",
     "registry:plan": "node packages/tooling/dist/src/registry.js",
     "bundle:plan": "node packages/tooling/dist/src/bundle-plan.js",
     "bundle:inventory": "node packages/tooling/dist/src/bundle-inventory.js inventory",

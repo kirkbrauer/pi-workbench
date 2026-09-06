@@ -11,6 +11,15 @@ This document consolidates the referenced design conversation and the subsequent
 
 Private Belt repositories were not inspectable in the referenced conversation and have not been inspected for this document. No example below claims to describe an existing Belt CRD, controller, or API. All Belt mappings require validation against its actual implementation.
 
+### Current implementation refinements
+
+The imported baseline below is retained. [Work and resumption](../WORK-AND-RESUMPTION.md)
+refines the morning workflow, Project/Work/goal/task/thread relationships, optional
+multi-repository checkout sets, build-compatible checkout strategies, XDG state
+ownership and sharing boundaries. Worktrees remain a preference, not a requirement.
+These refinements distinguish current registry behavior from proposed capabilities;
+they do not enable a scheduler, remote provider or UI outside the reviewed tier.
+
 ## 1. Executive summary
 
 Pi Workbench is a personal engineering control plane for development, operations, architecture, and hardware testing across a Fedora workstation, a work Mac, SSH hosts, and OpenShift/Kubernetes environments. A context-rich TUI brings together source checkouts, work items, remote sessions, build pipelines, application environments, and physical targets. Existing systems retain their authority: GitLab/GitHub own code review, Jira owns issues, Jama owns requirements, Jumpstarter owns hardware leases, and Belt owns remote workspace provisioning and lifecycle.

@@ -1,7 +1,8 @@
 # Pi Workbench
 
 A **TypeScript monorepo** for composable Pi engineering tools with a separately
-trusted execution broker. **Tier 0 in progress; no worker, UI or broker yet.**
+trusted execution broker. **Focused Tier 1 is authorized; the first local registry/CLI
+slice is in progress. No worker, UI or execution broker yet.**
 **Native OpenShell MicroVM diagnostic execution works on both Fedora Linux
 (x86_64/KVM) and macOS (Apple Silicon/Hypervisor.framework).** Authenticated exec,
 workspace writes and cooperative checkpoint/restart are demonstrated with
@@ -83,8 +84,29 @@ never overwritten. Actual Pi session metadata supplies attribution to Pi, not an
 invented Codex co-author. The hooks supply DCO under the installed policy; neither
 DCO nor agent-created PRs certify Kirk's review.
 
+## Local Work/Workspace CLI
+
+The first product slice tracks objectives, adopts existing Git worktrees, persists
+an explicit workspace selection, and rejects stale context or checkout drift.
+See **[packages/core/README.md](packages/core/README.md)** for setup and examples:
+
+```sh
+pnpm build
+pnpm --silent workbench --help
+```
+
+An opt-in [Workbench skill](skills/workbench/SKILL.md) teaches Pi agents the CLI
+workflow; it is not installed into global Pi configuration. [Pi ecosystem choices](docs/PI-ECOSYSTEM.md)
+records the inspected upstream tools and where Workbench deliberately differs.
+[Work and resumption](docs/WORK-AND-RESUMPTION.md) describes the morning work view,
+internal goals/tasks/threads, optional multi-repo checkout sets and private XDG storage.
+This local metadata slice grants no execution authority. Bundle assembly is deferred,
+not a prerequisite to the local product loop.
+
 ## Layout
 
+- `packages/core/`: local registry, Git checkout observations and Commander CLI.
+- `skills/workbench/`: task-oriented agent guidance for the CLI.
 - `packages/tooling/src`, `packages/tooling/tests`: real TypeScript foundation tools,
   including an [offline bundle inventory verifier](docs/BUNDLE-INVENTORY.md) and
   [locked dependency planner](docs/BUNDLE-PLAN.md). Bundle assembly is not implemented.
@@ -112,4 +134,5 @@ than replacing/bypassing hooks. Do not remove existing host workloads/tools.
 
 See [forge constraints](docs/FORGE.md). The personal-owner repo cannot use GitHub
 merge queues. The workflow is queue-compatible, not queue-tested. Stop at Kirk's
-GitHub review gate; Tier 1 needs all Tier 0 evidence plus an approved merged base.
+GitHub review gate. Kirk authorized focused Tier 1 on the merged foundation;
+remaining worker-qualification gaps stay attached to enabling real execution.
