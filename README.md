@@ -2,7 +2,8 @@
 
 A **TypeScript monorepo** for composable Pi engineering tools with a separately
 trusted execution broker. **Tier 0 in progress; no worker, UI or broker yet.**
-Native Fedora OpenShell MicroVM execution remains unverified.
+Native Fedora OpenShell MicroVM diagnostic execution works, but mandatory
+isolation/resource/persistence checks fail; no untrusted worker is admitted.
 
 ## Setup (trusted foundation checkout)
 
@@ -35,6 +36,11 @@ compilation/tests, exact tool versions and dependency source/policy checks.
 `pnpm build`, `pnpm typecheck` and `pnpm test` traverse workspaces. Every workspace
 must provide those scripts. `pnpm format` applies formatting; `pnpm outdated`
 investigates updates without changing the lock. Audit includes dev dependencies.
+
+For the bounded rootless helper and immutable development image, see
+[DEVELOPMENT-IMAGE.md](docs/DEVELOPMENT-IMAGE.md). Registry/Curation profiles and
+corporate CA qualification are in [REGISTRIES-AND-CA.md](docs/REGISTRIES-AND-CA.md).
+The native VM **ran but failed qualification**; see [NATIVE-VM.md](docs/NATIVE-VM.md).
 
 ## Attribution
 

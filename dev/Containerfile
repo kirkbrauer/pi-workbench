@@ -1,0 +1,16 @@
+# Trusted toolchain image ONLY, not the untrusted-worker VM boundary.
+FROM docker.io/library/node@sha256:4d676821dff059fd00d277ee4261ef34ea712317fed0737c03941481b5760c96
+ENV COREPACK_HOME=/home/node/.cache/corepack
+RUN corepack enable pnpm
+WORKDIR /tmp/workbench
+COPY --chown=node:node . /tmp/workbench
+USER node
+RUN corepack install \
+    && node --experimental-strip-types packages/tooling/src/sources.ts \
+    && pnpm install --frozen-lockfile --ignore-scripts \
+    && pnpm check \
+    && rm -rf .local/pnpm-store \
+    && mv /tmp/workbench /home/node/workbench-seed
+WORKDIR /home/node
+# Preserve pnpm's installed workspace path in a bounded tmpfs, not a host mount.
+CMD ["sh", "-eu", "-c", "cp -a /home/node/workbench-seed /tmp/workbench; cd /tmp/workbench; pnpm check"]

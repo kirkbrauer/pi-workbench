@@ -30,6 +30,8 @@ jobs:
         run: node --experimental-strip-types packages/tooling/src/sources.ts
       - name: Install frozen dependencies without lifecycle scripts
         run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Check diagnostic helper syntax (no native VM execution in CI)
+        run: for script in scripts/*.sh; do bash -n "$script"; done
       - run: pnpm check
       - name: Block known high or critical vulnerabilities (including dev dependencies)
         run: pnpm audit --audit-level high

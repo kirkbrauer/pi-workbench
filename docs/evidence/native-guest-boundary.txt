@@ -1,0 +1,8 @@
+kernel=6.12.76
+boot_id=6c69bceb-10cf-412e-bb95-c1d7c63373c5
+uid=998(sandbox) gid=998(sandbox) groups=998(sandbox)
+vcpus=2
+MemTotal:        2075496 kB
+0::/
+allowed workspace write/read passed; host fixture/home/engine paths absent
+FAIL: guest PID budget unavailable/unlimited
