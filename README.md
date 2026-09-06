@@ -5,8 +5,9 @@ trusted execution broker. **Tier 0 in progress; no worker, UI or broker yet.**
 **Native OpenShell MicroVM diagnostic execution works on both Fedora Linux
 (x86_64/KVM) and macOS (Apple Silicon/Hypervisor.framework).** Authenticated exec,
 workspace writes and cooperative checkpoint/restart are demonstrated with
-synthetic data. Mandatory isolation/resource/raw-stop persistence checks still
-fail; no untrusted worker is admitted.
+synthetic data. **Landlock absence and raw-stop data loss are accepted limitations**;
+see the [scoped decision](docs/ACCEPTED-RUNTIME-LIMITATIONS.md). Guest PID limits and
+broader worker-boundary qualification remain unresolved; no untrusted worker is admitted.
 
 See [Fedora evidence](docs/NATIVE-RUNTIME-SPIKE.md),
 [macOS E2E evidence](docs/MACOS-E2E.md), and the
@@ -84,7 +85,10 @@ DCO nor agent-created PRs certify Kirk's review.
 
 ## Layout
 
-- `packages/tooling/src`, `packages/tooling/tests`: real TypeScript foundation tools.
+- `packages/tooling/src`, `packages/tooling/tests`: real TypeScript foundation tools,
+  including an [offline bundle inventory verifier](docs/BUNDLE-INVENTORY.md).
+- [Remote bootstrap requirements](docs/REMOTE-BOOTSTRAP.md): explicit enrollment,
+  self-contained artifacts and bounded update authority; no remote installer yet.
 - `pnpm-workspace.yaml`, `pnpm-lock.yaml`: workspace and supply-chain policy/lock.
 - Root `tsconfig.json`: shared strict compiler options; package-local build output.
 - `config/`: public exact tool/hook inputs, no credentials.

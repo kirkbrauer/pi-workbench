@@ -26,6 +26,8 @@
     "audit": "pnpm audit --audit-level high",
     "outdated": "pnpm -r outdated",
     "registry:plan": "node packages/tooling/dist/src/registry.js",
+    "bundle:inventory": "node packages/tooling/dist/src/bundle-inventory.js inventory",
+    "bundle:verify": "node packages/tooling/dist/src/bundle-inventory.js verify",
     "check:sources": "node --experimental-strip-types packages/tooling/src/sources.ts",
     "check:dependencies": "node packages/tooling/dist/src/dependencies.js",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm check:toolchain && pnpm check:dependencies"
