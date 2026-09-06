@@ -382,8 +382,8 @@ print(json.dumps(report, indent=2))
                     self.lifecycle(mode)
                 except Exception as error:
                     self.results[mode] = f"error: {error}"
-            self.capture_logs("diagnostic")
-            self.cli("delete-diagnostic", ["sandbox", "delete", NAMES[0]], required=False)
+        self.capture_logs("diagnostic")
+        self.cli("delete-diagnostic", ["sandbox", "delete", NAMES[0]])
         # Separate strict policy, unchanged even if diagnostic startup failed.
         self.results["create_strict"] = self.create(NAMES[1], "strict", 60)[0]
         self.cli("strict-phase", ["sandbox", "get", NAMES[1]], required=False)
@@ -392,7 +392,7 @@ print(json.dumps(report, indent=2))
     def capture_logs(self, label):
         if not self.root:
             return
-        for pattern in ("gateway.log", "state/**/console.log", "state/**/gvproxy.log", "state/**/provenance.json"):
+        for pattern in ("gateway.log", "state/**/*console.log", "state/**/gvproxy.log", "state/**/provenance.json"):
             for path in self.root.glob(pattern):
                 if path.is_file() and not path.is_symlink():
                     with path.open("rb") as stream:

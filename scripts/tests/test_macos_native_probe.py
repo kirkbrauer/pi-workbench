@@ -66,6 +66,22 @@ class MacProbeTests(unittest.TestCase):
             time.sleep(2)
             self.assertFalse(marker.exists())
 
+    def test_capture_actual_console_filename_not_private_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            evidence = root / "evidence"
+            evidence.mkdir()
+            instance = probe.Probe(evidence)
+            instance.root = root / "runtime"
+            sandbox = instance.root / "state/sandboxes/synthetic"
+            sandbox.mkdir(parents=True)
+            (sandbox / "rootfs-console.log").write_text("synthetic boot diagnostic")
+            (sandbox / "sandbox.pb").write_text("must not capture")
+            (sandbox / "overlay.ext4").write_text("must not capture")
+            instance.capture_logs("test")
+            self.assertEqual((evidence / "test-state_sandboxes_synthetic_rootfs-console.log").read_text(), "synthetic boot diagnostic")
+            self.assertFalse(any(p.suffix in (".pb", ".ext4", ".key") for p in evidence.iterdir()))
+
     @unittest.skipUnless(sys.platform == "darwin", "Mac system OpenSSL fixture")
     def test_synthetic_pki_passes_strict_mutual_tls(self):
         with tempfile.TemporaryDirectory() as directory:
