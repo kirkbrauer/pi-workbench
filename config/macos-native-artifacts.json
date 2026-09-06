@@ -1,0 +1,13 @@
+{
+  "openshell": "0.0.116",
+  "binaries": {
+    "openshell": "0baeeffe0e4c184b08fde910ac9e8815fb0b8cfb808e49c0e634d7db65fb03bb",
+    "openshell-gateway": "298706259ef18350f334c222e981e91583558511d50bce22727c689d261203e6",
+    "openshell-driver-vm": "58e1e64519c4d3786c8b0ac4d33566820aca9f870db483702155b36622cb4db5"
+  },
+  "originalDriver": "91fde587c0e148b7bd64e18f6fff1ceb95d1c42deee1c00fe7f819dd8830c926",
+  "runtimeArchive": "04349e6395c60e8cda059cc74e24105fdd23cec49ceac84966ce7377396e757d",
+  "image": "ghcr.io/nvidia/openshell-community/sandboxes/base@sha256:04dd51f785ae52557ac53d4b12b3a0611a7347e5b8738e6278203465e6fb726e",
+  "imageConfig": "sha256:bcf4897ab8f95ec875847998297da98d16a44c8741c62c738d917f0eb8d35097",
+  "platform": "linux/arm64"
+}

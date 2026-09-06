@@ -1,0 +1,166 @@
+Native macOS MicroVM diagnostic, 2026-09-06 UTC
+RESULT: guest supervisor startup observed; command execution/qualification BLOCKED.
+No OpenShell source/kernel/runtime patch, emulation or container-backend fallback.
+
+FINAL NATIVE RUN
+Command: python3 -B scripts/macos-native-probe.py --evidence .local/macos-run-003
+Tested checkout: 703a453330d2aff32d727018bc14e2bbf611fcd4
+Host: macOS 26.6.1 build 25G76, arm64, kern.hv_support=1, 32 GiB physical RAM
+Private runtime state: /private/tmp/wbm-cjg79mvi (removed)
+Helper SHA256: 902972cd9a99843315b3c95db350f81760e9b3887c7035bb11d5aca702ae3e84
+Helper test SHA256: 225aa7d935629725f2c818181baf8cb49a6ece4809ff3da0780f2b1fb3a37151
+Artifact pin config SHA256: a97950f76a13d520973ec82df2c06c6e8ac5a1e7bce6951712d99009512a5b17
+Generated gateway.toml SHA256: e3a7874339748cc3299273bb242da041b8a5b4c197167ffd16b8854cb3bade7a
+Diagnostic policy SHA256: 08d65b474ea862e8f33deaca74a2f2a37a858bbe19e7a962f01f23947794497e
+Strict policy SHA256: c49c4f76b46aab301ef6827c7f077800ecfaa95ece69630d66efebe61c40ed2f
+Reusable guest probe SHA256: 61c4e39cc7c99a053d40eb0ca68a13908cdc4174509dedf75913666c124becc8 (not executed)
+Synthetic openssl extension config SHA256: e6697814d81da5d0bf571b882b51139d3fdaaf69bd115412d872c5330088cfb4
+Synthetic public certificate SHA256:
+ CA 70b31a9a8aa893115c62d53ce30c4d15693775dfa67aa4b336fec28d67dff2c8
+ server b5b9bb11f551f3e83fbbb3ccf8bfa82470f3127ada936635a24a96c42872c88a
+ client bbb0c2a4debcc6979e6c40cbfe365e2d5577121e59d09a57018199852ee61352
+No private key/JWT/DB/sandbox.pb/overlay is published or retained as evidence.
+
+ARTIFACTS
+OpenShell CLI/gateway/driver --version all reported 0.0.116, native Mach-O ARM64.
+Downloaded archive hashes and successful GitHub attestation verification are in
+macos-preflight.txt; originals remain unchanged in ignored public-artifact cache.
+Executed binary SHA256:
+ CLI 0baeeffe0e4c184b08fde910ac9e8815fb0b8cfb808e49c0e634d7db65fb03bb
+ gateway 298706259ef18350f334c222e981e91583558511d50bce22727c689d261203e6
+ driver 58e1e64519c4d3786c8b0ac4d33566820aca9f870db483702155b36622cb4db5
+Original driver SHA256: 91fde587c0e148b7bd64e18f6fff1ceb95d1c42deee1c00fe7f819dd8830c926
+Authorized ad-hoc signing applied only to disposable copy, per upstream formula.
+Signature verification passed; com.apple.security.hypervisor=true observed.
+No OpenShell source build, firmware patch, library replacement or policy downgrade.
+
+Attested Darwin runtime archive SHA256:
+04349e6395c60e8cda059cc74e24105fdd23cec49ceac84966ce7377396e757d
+Extracted driver's libraries/helpers matched archive member SHA256 byte-for-byte:
+ libkrun.dylib 81034d53b78adec4a47800957d51f5fa832ffed2841847b5b75209b73f6d4ac4
+ libkrunfw.5.dylib 5598f091ac03d6f2030869e47bfda30c4e80c2235f414d19f724a6aa0f2f6d0c
+ gvproxy c6f7b4bc7f21bf810b5cf54e04d979b014c5d96472a03a9e97fe62a00940067c
+Archive umoci SHA256: 5cfd17f2e7a4bcf9ed67ea1b955ca893d200349b9ce6a3d3707dba415f458a1f
+ umoci was not extracted/captured on host in this run; no byte-equivalence claim.
+Runtime provenance source: 56088d0811f35d01e5af8f975335c9d0e30524be
+Runtime build: 2026-08-27T00:24:15Z, upstream Actions 33026157021
+Runtime provenance kernel_version and libkrunfw_commit: unknown (not inherited from Fedora)
+
+IMAGE
+Anonymous public registry metadata inspection:
+ base:latest resolved index sha256:aeef1c63f00e2913ea002ccb3aaf925f338b5c5d70e63576f0d95c16a138044e
+ Selected/executed reference (no mutable tag in runtime config):
+ ghcr.io/nvidia/openshell-community/sandboxes/base@sha256:04dd51f785ae52557ac53d4b12b3a0611a7347e5b8738e6278203465e6fb726e
+ Config sha256:bcf4897ab8f95ec875847998297da98d16a44c8741c62c738d917f0eb8d35097
+ Manifest/config body digests checked; config os=linux architecture=arm64
+ OCI label source https://github.com/NVIDIA/OpenShell-Community
+ OCI label revision fffb6b2248ff6ba585f50517f3711b08122089f2
+ Config created 2026-05-29T16:24:47.56797003Z
+ Compressed layers 1127142265 bytes; image signature not independently verified.
+ Driver log: no local container engine available, falling back to registry.
+ This refers to image sourcing, NOT a fallback from VM compute to containers.
+ Image pulled and rootfs formatted; no Docker/Podman machine/service started.
+
+GATEWAY OBSERVATIONS
+Signature, entitlements, synthetic PKI issuance, listener check, registration and status: exit 0.
+Sole gateway TCP listener: 127.0.0.1:18770; health/metrics listeners disabled.
+CLI status:
+ Gateway: wb-mac
+ Server: https://127.0.0.1:18770
+ Status: Connected
+ Authentication: Authenticated (mTLS transport)
+ Version: 0.0.116
+Gateway logged compute driver vm and separate gateway-minted sandbox JWT enabled.
+Provider count from guest supervisor: env_count:0; no accounts/providers enrolled.
+No-client-certificate curl with trusted server CA: exit 56.
+Gateway corresponding TLS error: peer sent no certificates.
+No insecure TLS flag used. Strict Python certificate verification retained.
+
+GUEST STARTUP (bounded console extracts; not a guest exec identity probe)
+Diagnostic sandbox 576b9bb5-75dc-4f54-8daa-534fa8b3b105:
+ [0.001s] setting up writable overlay root
+ [0.049s] prepared /sandbox ownership (998:998)
+ [0.053s] hostname=wb-mac-diagnostic
+ [0.060s] detected eth0 (gvproxy networking)
+ /srv/openshell-vm-sandbox-init.sh: line 394: /etc/hosts: Read-only file system
+ [0.069s] WARNING: could not update /etc/hosts
+ [0.080s] WARNING: could not preflight HTTPS OpenShell endpoint host.openshell.internal:18770; preserving hostname for TLS verification
+ [0.083s] WARNING: gateway NOT reachable at host.openshell.internal:18770 — supervisor may fail to connect
+ [0.084s] starting openshell-sandbox supervisor
+ 2026-09-06T00:58:52.676Z INFO openshell_sandbox: Fetching sandbox policy via gRPC
+ 2026-09-06T00:58:52.683Z INFO openshell_sandbox: Creating OPA engine from proto policy data
+ 2026-09-06T00:58:52.695Z OCSF CONFIG:LOADED [INFO] Fetched provider environment [env_count:0]
+ 2026-09-06T00:58:52.750Z OCSF CONFIG:INSTALLED [INFO] Bypass detection rules installed
+ 2026-09-06T00:58:52.772Z WARN openshell_supervisor_network::proxy: host.openshell.internal maps to a non-link-local IP; trusted-gateway SSRF exemption disabled
+ 2026-09-06T00:58:52.776Z WARN openshell_supervisor_process::process: runtime cgroup pids.max is unavailable (No such file or directory (os error 2)); configure the compute driver or container runtime to enforce a PID limit
+ 2026-09-06T00:58:52.776Z OCSF FINDING:CREATE [HIGH] "Landlock Filesystem Sandbox Unavailable" [type:landlock-unavailable confidence:high]
+ 2026-09-06T00:58:52.777Z OCSF FINDING:CREATE [HIGH] "Landlock Filesystem Sandbox Unavailable" [type:landlock-unavailable confidence:high]
+ 2026-09-06T00:58:52.801Z WARN openshell_supervisor_process::netns: Failed to delete network namespace
+ 2026-09-06T00:58:52.802Z OCSF CONFIG:CLEANED_UP [INFO] Network namespace cleaned up
+ create-diagnostic exit=124 after 300 seconds; subsequent get exit=0, Phase: Provisioning.
+
+Strict sandbox 9830c40b-aa00-424f-be63-fb6caf159aea:
+ startup also reached policy fetch and provider env_count:0
+ same pids.max warning and Landlock-unavailable finding
+ 2026-09-06T01:03:07.822Z WARN openshell_supervisor_process::netns: Failed to delete network namespace
+ 2026-09-06T01:03:07.822Z OCSF CONFIG:CLEANED_UP [INFO] Network namespace cleaned up
+ create-strict exit=124 after 60 seconds; subsequent get exit=0, Phase: Provisioning.
+ hard_requirement remained in returned policy; no downgrade.
+ MAC_STRICT_CANONICAL_STARTED not present in captured console.
+ Supervisor cleanup is observed; exit code/root cause is NOT captured as a clean terminal result.
+ Best-effort's exact startup failure cause is unknown. Do not blame Landlock alone:
+ inspected upstream best_effort Landlock preparation explicitly permits an unavailable ABI.
+
+PREDICATE LIMITS
+- Guest init/supervisor running and authenticated gateway policy fetch: observed.
+- Guest uname/kernel version, boot ID, exec UID: NOT TESTED (no ready exec session).
+  Image platform and /sandbox ownership do not substitute for these probes.
+- Landlock unavailable: supervisor finding; direct syscall ABI/errno NOT TESTED.
+  Upstream ARM64 ENOSYS remains unconfirmed locally; no errno inferred.
+- Guest PID budget unavailable: supervisor warning; detailed controller/placement NOT TESTED.
+- 2 vCPUs, 2048 MiB guest RAM: configured, not measured/enforcement-tested.
+- Overlay files: 4294967296 bytes each, separately captured before deletion.
+- Host: deadlines and owned process groups only; no aggregate RAM/CPU/PID quota.
+- Host-denied synthetic fixture created, but guest path-absence/allowed-write test NOT TESTED.
+- Guest capabilities/seccomp, proxy denial, direct bypass, allowed controls: NOT TESTED.
+  Supervisor rule-install logs are not network-enforcement proof.
+- Raw stop/start and cooperative checkpoint/start: NOT TESTED; no commands/markers ran.
+- Strict policy: startup remained Provisioning, not clean terminal rejection.
+
+EARLIER RUNS RETAINED
+001 checkout c092a40bbaa1afc02a47e8b904293f021cc2b959:
+ config aebe126873910c3c24b3d7c9483556f1434953f17b6fa8f13a6d5badf02e9b20
+ authenticated TLS readiness failed; no sandbox created.
+ Separate local fixture: Python strict TLS error 85, Missing Authority Key Identifier.
+ Resolved through external synthetic PKI issuance, not relaxed verification.
+002 checkout 5499fb4e429ee3d98d43ab50cc61d52acc6f1bd2:
+ config eedce2c020b7a66ad25a1994a091ebd55967d3ad839c361d4872fa1970470037
+ mTLS/status/ARM64 image preparation succeeded; both creates timed out in Provisioning.
+ Console collector used wrong filename; no console evidence retained for this run.
+003 fixed console filename collection, tested with fixture, and deletes diagnostic
+ before strict creation. Same startup outcome. No further native repair attempted.
+
+CLEANUP / HOST IMPACT
+Final delete-diagnostic exit=0 before strict run; strict cleanup delete exit=0.
+Redundant final delete-diagnostic returned 1 (already deleted); final list:
+ exit=0, No sandboxes found.
+Overlay paths remaining before root removal: []
+Remaining owned process-group members: []
+state_removed=true for all three runs, independently checked directories absent.
+Final ps PID/PPID/PGID/comm inspection: no OpenShell/krun/gvproxy/vfkit processes.
+Final lsof: no listener on 18770. Existing Podman machine remained stopped.
+Original Android mke2fs symlink unchanged. Disk approximately 84 GiB available.
+Authorized persistent changes: keg-only e2fsprogs 1.47.4; installed pinned upstream
+attribution hooks and git-signoff/global hooksPath. Isolated ignored Node/Corepack/
+pnpm caches and public runtime downloads remain. Running host Pi/Node untouched.
+No sudo, host firewall/security change, credentials transferred or service installed.
+Raw private evidence scan found no private-key PEM or compact JWT; scan is not exhaustive.
+
+CHECKS AT TESTED HELPER REVISION
+7 Mac helper tests PASS, including strict mutual TLS and actual console capture.
+10 TypeScript tests, lint/type/build/toolchain/dependency checks PASS.
+pnpm audit --audit-level high: No known vulnerabilities found.
+pnpm check:hooks and actual-session pnpm test:hooks PASS; expected fixture denials.
+Old Fedora fake-CLI tests: 2 fail on Mac (GNU timeout unavailable), 1 passes.
+No weakening of those tests/CI or installation of GNU timeout to hide portability gap.
+No hosted CI evidence for this branch and no human acceptance is claimed.
