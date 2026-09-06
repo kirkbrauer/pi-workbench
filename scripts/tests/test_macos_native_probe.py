@@ -1,9 +1,11 @@
 """Host-only tests: no OpenShell, VM, installs, signing or networking."""
 import importlib.util
 import json
-import os
 from pathlib import Path
+import socket
+import ssl
 import subprocess
+import threading
 import sys
 import tempfile
 import time
@@ -63,6 +65,48 @@ class MacProbeTests(unittest.TestCase):
             self.assertEqual(code, 124)
             time.sleep(2)
             self.assertFalse(marker.exists())
+
+    @unittest.skipUnless(sys.platform == "darwin", "Mac system OpenSSL fixture")
+    def test_synthetic_pki_passes_strict_mutual_tls(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "tls/server").mkdir(parents=True)
+            (root / "tls/client").mkdir()
+            def command(_label, args):
+                subprocess.run(args, check=True, capture_output=True, timeout=10)
+            probe.issue_synthetic_mtls(root, command)
+            server = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            server.load_cert_chain(root / "tls/server/tls.crt", root / "tls/server/tls.key")
+            server.load_verify_locations(root / "tls/ca.crt")
+            server.verify_mode = ssl.CERT_REQUIRED
+            server.verify_flags |= ssl.VERIFY_X509_STRICT
+            client = ssl.create_default_context(cafile=str(root / "tls/ca.crt"))
+            client.verify_flags |= ssl.VERIFY_X509_STRICT
+            client.load_cert_chain(root / "tls/client/tls.crt", root / "tls/client/tls.key")
+            result = []
+            with socket.socket() as listener:
+                listener.bind(("127.0.0.1", 0))
+                listener.listen()
+                listener.settimeout(5)
+                def serve():
+                    try:
+                        raw, _ = listener.accept()
+                        with raw:
+                            raw.settimeout(5)
+                            with server.wrap_socket(raw, server_side=True) as conn:
+                                result.append(bool(conn.getpeercert()))
+                                conn.sendall(b"synthetic")
+                    except Exception as error:
+                        result.append(error)
+                thread = threading.Thread(target=serve)
+                thread.start()
+                try:
+                    with socket.create_connection(listener.getsockname(), timeout=5) as raw:
+                        with client.wrap_socket(raw, server_hostname="127.0.0.1") as conn:
+                            self.assertEqual(conn.recv(16), b"synthetic")
+                finally:
+                    thread.join(timeout=6)
+                self.assertEqual(result, [True])
 
     def test_invalid_arguments_cannot_launch(self):
         result = subprocess.run([sys.executable, "-B", str(MODULE)], capture_output=True, timeout=5)

@@ -99,6 +99,50 @@ def checkpoint_stop(exec_sync, stop):
     return stop()
 
 
+def issue_synthetic_mtls(root, command):
+    """Short-lived diagnostic PKI; keep strict TLS checks and separate JWT keys.
+
+    Upstream 0.0.116 certgen's leaf certificates omit AKI. Use standard external
+    certificate provisioning, not modified OpenShell or relaxed TLS verification.
+    """
+    tls = root / "tls"
+    config = tls / "synthetic.cnf"
+    config.write_text('''[req]
+distinguished_name = dn
+[dn]
+[ca]
+basicConstraints = critical,CA:TRUE
+keyUsage = critical,keyCertSign,cRLSign
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always
+[server]
+basicConstraints = critical,CA:FALSE
+keyUsage = critical,digitalSignature
+extendedKeyUsage = serverAuth
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always
+subjectAltName = DNS:localhost,DNS:host.openshell.internal,IP:127.0.0.1
+[client]
+basicConstraints = critical,CA:FALSE
+keyUsage = critical,digitalSignature
+extendedKeyUsage = clientAuth
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always
+''')
+    def openssl(label, args):
+        return command(label, ["/usr/bin/openssl", *map(str, args)])
+    openssl("synthetic-ca-key", ["ecparam", "-name", "prime256v1", "-genkey", "-noout", "-out", tls / "ca.key"])
+    openssl("synthetic-ca", ["req", "-new", "-x509", "-key", tls / "ca.key", "-sha256", "-days", "2",
+                            "-subj", "/CN=workbench-synthetic-ca", "-config", config, "-extensions", "ca", "-out", tls / "ca.crt"])
+    for role, subject in (("server", "/CN=openshell-server"), ("client", "/CN=openshell-client/OU=openshell-user")):
+        directory = tls / role
+        openssl(f"synthetic-{role}-key", ["ecparam", "-name", "prime256v1", "-genkey", "-noout", "-out", directory / "tls.key"])
+        openssl(f"synthetic-{role}-csr", ["req", "-new", "-key", directory / "tls.key", "-subj", subject, "-out", directory / "tls.csr"])
+        openssl(f"synthetic-{role}-cert", ["x509", "-req", "-in", directory / "tls.csr", "-CA", tls / "ca.crt",
+                                        "-CAkey", tls / "ca.key", "-CAcreateserial", "-days", "2", "-sha256",
+                                        "-extfile", config, "-extensions", role, "-out", directory / "tls.crt"])
+
+
 def configuration(root, image):
     return f'''[openshell]
 version = 1
@@ -196,6 +240,7 @@ class Probe:
         if "com.apple.security.hypervisor" not in entitlement or "true" not in entitlement:
             raise RuntimeError("Hypervisor entitlement not observed")
         self.command("certs", [str(self.root / "bin/openshell-gateway"), "generate-certs", "--output-dir", str(self.root / "tls"), "--server-san", "host.openshell.internal"])
+        issue_synthetic_mtls(self.root, self.command)
         mtls = self.root / f"home/.config/openshell/gateways/{GATEWAY}/mtls"
         mtls.mkdir(parents=True, mode=0o700)
         for src, dst in (("ca.crt", "ca.crt"), ("client/tls.crt", "tls.crt"), ("client/tls.key", "tls.key")):
@@ -217,6 +262,8 @@ class Probe:
                 REPO / "scripts/macos-native-probe.py", REPO / "scripts/guest-runtime-diagnose.py",
                 REPO / "config/macos-native-artifacts.json", REPO / "config/native-diagnostic-policy.yaml")},
             "config_sha256": sha(self.root / "gateway.toml"),
+            "synthetic_pki_hashes": {name: sha(self.root / "tls" / name) for name in
+                                     ("synthetic.cnf", "ca.crt", "server/tls.crt", "client/tls.crt")},
             "host_controls": "operation/overall wall deadlines and owned process groups only; no aggregate RAM/CPU/PID enforcement",
         }
 
@@ -240,6 +287,8 @@ class Probe:
                 with socket.create_connection(("127.0.0.1", PORT), timeout=2) as raw:
                     with context.wrap_socket(raw, server_hostname="127.0.0.1"):
                         break
+            except ssl.SSLCertVerificationError as error:
+                raise RuntimeError(f"TLS verification failed: {error.verify_code} {error.verify_message}") from error
             except (OSError, ssl.SSLError):
                 time.sleep(1)
         else:

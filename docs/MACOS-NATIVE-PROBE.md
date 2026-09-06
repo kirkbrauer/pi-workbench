@@ -90,5 +90,23 @@ Hook checks used CI=true (matching the install's pnpm virtual-store setting) and
 an empty npm user-config, while preserving actual Git identity/policy and Pi
 session metadata. Earlier mismatched pnpm invocations refused before hooks ran.
 
-Native execution results follow separately; this setup/test record is not a VM
+## First launch / strict PKI interoperability finding
+
+Run `.local/macos-run-001` at `c092a40bbaa1afc02a47e8b904293f021cc2b959`
+started the explicit VM gateway/driver but failed authenticated TLS readiness;
+no sandbox was created. Its config SHA256 was
+`aebe126873910c3c24b3d7c9483556f1434953f17b6fa8f13a6d5badf02e9b20`.
+Gateway logged `CertificateUnknown`. A separate disposable local TLS fixture
+identified Python strict validation error 85, `Missing Authority Key Identifier`,
+in OpenShell's generated certificates. All first-run state/children were removed.
+
+The helper now provisions two-day synthetic CA/server/client certificates via
+macOS OpenSSL with explicit critical constraints/key usage, AKI/SKI, server/client
+EKU and loopback/guest gateway SANs. This is external TLS certificate provisioning,
+not an OpenShell patch. Separate upstream-generated synthetic Ed25519 JWT material
+is retained. **No TLS verification flags were relaxed.** Certificate errors now
+fail immediately instead of repeating until the readiness deadline. A sixth
+host test verifies this synthetic PKI with strict mutual TLS; all six passed.
+
+Native execution results follow separately; setup and host tests are not a VM
 boot or security acceptance claim.
