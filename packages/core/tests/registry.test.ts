@@ -64,12 +64,12 @@ async function fixture(t: TestContext) {
     next = await commit("next", first);
   await git.raw(["update-ref", "refs/heads/main", first]);
   await git.raw(["worktree", "add", "--detach", second, first]);
-  const open = (
+  const open = async (
     directory = state,
     profile: "personal" | "work" = "personal",
     create = true,
   ) => {
-    const registry = new Registry(directory, profile, create);
+    const registry = await Registry.open(directory, profile, create);
     opened.add(registry);
     return registry;
   };
@@ -91,8 +91,8 @@ function invoke(args: string[], env: NodeJS.ProcessEnv = {}) {
 
 test("two independent Git worktrees share repository identity and reopen with stable IDs", async (t) => {
   const f = await fixture(t),
-    registry = f.open();
-  const work = registry.createWork(
+    registry = await f.open();
+  const work = await registry.createWork(
     "Implement registry",
     "Resume development without reconstructing context",
   );
@@ -106,10 +106,10 @@ test("two independent Git worktrees share repository identity and reopen with st
   writeFileSync(join(f.second, "dirty.txt"), "second workspace");
   const selected = await registry.select(two.id, 0);
   f.close(registry);
-  const reopened = f.open(f.state, "personal", false);
+  const reopened = await f.open(f.state, "personal", false);
   assert.deepEqual(await reopened.context(), selected);
-  assert.equal(reopened.list().works[0]?.id, work.id);
-  assert.equal(reopened.list().repositories.length, 1);
+  assert.equal((await reopened.list()).works[0]?.id, work.id);
+  assert.equal((await reopened.list()).repositories.length, 1);
   assert.equal(
     readFileSync(join(f.checkout, "dirty.txt"), "utf8"),
     "first workspace",
@@ -122,9 +122,9 @@ test("two independent Git worktrees share repository identity and reopen with st
 
 test("adoption is idempotent but cannot silently reassign a checkout or invent a Work", async (t) => {
   const f = await fixture(t),
-    registry = f.open();
-  const work = registry.createWork("One", "First objective"),
-    other = registry.createWork("Two", "Second objective");
+    registry = await f.open();
+  const work = await registry.createWork("One", "First objective"),
+    other = await registry.createWork("Two", "Second objective");
   const workspace = await registry.adopt(work.id, f.checkout);
   assert.equal((await registry.adopt(work.id, f.checkout)).id, workspace.id);
   await assert.rejects(registry.adopt(other.id, f.checkout), /another Work/);
@@ -132,28 +132,31 @@ test("adoption is idempotent but cannot silently reassign a checkout or invent a
     registry.adopt("work_00000000-0000-0000-0000-000000000000", "/nonexistent"),
     /unknown Work/,
   );
-  assert.equal(registry.list().workspaces.length, 1);
+  assert.equal((await registry.list()).workspaces.length, 1);
 });
 
 test("profile stores reject mismatched reopening and foreign IDs without relabeling", async (t) => {
   const f = await fixture(t),
-    personal = f.open(),
-    work = f.open(join(f.root, "work-state"), "work");
-  const objective = personal.createWork("Personal", "Not corporate context");
+    personal = await f.open(),
+    work = await f.open(join(f.root, "work-state"), "work");
+  const objective = await personal.createWork(
+    "Personal",
+    "Not corporate context",
+  );
   const workspace = await personal.adopt(objective.id, f.checkout);
-  assert.throws(() => new Registry(f.state, "work"), /profile mismatch/);
+  await assert.rejects(Registry.open(f.state, "work"), /profile mismatch/);
   await assert.rejects(work.adopt(objective.id, f.checkout), /unknown Work/);
   await assert.rejects(work.select(workspace.id, 0), /unknown workspace/);
-  assert.deepEqual(work.list().works, []);
+  assert.deepEqual((await work.list()).works, []);
   assert.notEqual(personal.environmentId, work.environmentId);
   assert.equal((await personal.context()).generation, 0);
 });
 
 test("concurrent clients use compare-and-swap context generations", async (t) => {
   const f = await fixture(t),
-    registry = f.open(),
-    other = f.open();
-  const work = registry.createWork(
+    registry = await f.open(),
+    other = await f.open();
+  const work = await registry.createWork(
     "Concurrent",
     "Only one selected context transition wins",
   );
@@ -176,8 +179,8 @@ test("concurrent clients use compare-and-swap context generations", async (t) =>
 
 test("HEAD drift blocks context restoration; explicit refresh preserves dirty source and IDs", async (t) => {
   const f = await fixture(t),
-    registry = f.open();
-  const work = registry.createWork(
+    registry = await f.open();
+  const work = await registry.createWork(
     "Drift",
     "Explicitly accept new observations",
   );
@@ -187,7 +190,7 @@ test("HEAD drift blocks context restoration; explicit refresh preserves dirty so
   await f.git.raw(["update-ref", "refs/heads/main", f.next]);
   await assert.rejects(registry.context(), /checkout drift: revision/);
   await assert.rejects(registry.select(workspace.id, 1), /checkout drift/);
-  const stored = registry.list();
+  const stored = await registry.list();
   assert.equal(stored.context.generation, 1);
   assert.equal(stored.workspaces[0]?.revision, f.first);
   const refreshed = await registry.refresh(workspace.id, 1);
@@ -203,8 +206,11 @@ test("HEAD drift blocks context restoration; explicit refresh preserves dirty so
 
 test("same-commit branch drift and replacement Git storage are not silently adopted", async (t) => {
   const f = await fixture(t),
-    registry = f.open();
-  const work = registry.createWork("Identity", "Reject checkout replacement");
+    registry = await f.open();
+  const work = await registry.createWork(
+    "Identity",
+    "Reject checkout replacement",
+  );
   const workspace = await registry.adopt(work.id, f.checkout);
   await registry.select(workspace.id, 0);
   await f.git.raw(["update-ref", "refs/heads/other", f.first]);
@@ -228,7 +234,7 @@ test("same-commit branch drift and replacement Git storage are not silently adop
     registry.refresh(workspace.id, 2),
     /checkout drift: commonIdentity/,
   );
-  assert.equal(registry.list().context.generation, 2);
+  assert.equal((await registry.list()).context.generation, 2);
 });
 
 test("non-repositories, unborn and bare repositories and non-root paths fail", async (t) => {
@@ -250,16 +256,16 @@ test("non-repositories, unborn and bare repositories and non-root paths fail", a
 
 test("schema initialization/reopening is explicit; future and unrelated databases are retained", async (t) => {
   const f = await fixture(t);
-  assert.throws(() => new Registry(f.state, "personal"), /ENOENT/);
-  const registry = f.open();
+  await assert.rejects(Registry.open(f.state, "personal"), /ENOENT/);
+  const registry = await f.open();
   f.close(registry);
   const file = join(f.state, "registry.sqlite");
   const db = new DatabaseSync(file);
   db.exec("PRAGMA user_version=99");
   db.close();
   const before = readFileSync(file);
-  assert.throws(
-    () => new Registry(f.state, "personal", true),
+  await assert.rejects(
+    Registry.open(f.state, "personal", true),
     /unsupported registry schema/,
   );
   assert.deepEqual(readFileSync(file), before);
@@ -270,27 +276,27 @@ test("schema initialization/reopening is explicit; future and unrelated database
   foreign.exec("CREATE TABLE unrelated (id INTEGER)");
   foreign.close();
   chmodSync(unrelatedFile, 0o600);
-  assert.throws(
-    () => new Registry(unrelated, "personal", true),
+  await assert.rejects(
+    Registry.open(unrelated, "personal", true),
     /unrelated database/,
   );
   const empty = join(f.root, "empty-state");
   mkdirSync(empty, { mode: 0o700 });
   writeFileSync(join(empty, "registry.sqlite"), "", { mode: 0o600 });
-  assert.throws(() => new Registry(empty, "personal"), /uninitialized/);
-  const initialized = f.open(empty);
-  assert.equal(initialized.list().context.generation, 0);
+  await assert.rejects(Registry.open(empty, "personal"), /uninitialized/);
+  const initialized = await f.open(empty);
+  assert.equal((await initialized.list()).context.generation, 0);
 });
 
 test("private storage modes, non-linked state and validated input are required", async (t) => {
   const f = await fixture(t),
-    registry = f.open();
+    registry = await f.open();
   assert.equal(statSync(f.state).mode & 0o777, 0o700);
   const file = join(f.state, "registry.sqlite");
   assert.equal(statSync(file).mode & 0o777, 0o600);
-  assert.throws(() => registry.createWork("", "objective"), /invalid text/);
-  assert.throws(
-    () => registry.createWork("name", "x".repeat(4001)),
+  await assert.rejects(registry.createWork("", "objective"), /invalid text/);
+  await assert.rejects(
+    registry.createWork("name", "x".repeat(4001)),
     /invalid text/,
   );
   await assert.rejects(registry.select("not-an-id", 0), /invalid ID/);
@@ -303,14 +309,17 @@ test("private storage modes, non-linked state and validated input are required",
   );
   const alias = join(f.root, "alias");
   symlinkSync(f.state, alias);
-  assert.throws(() => new Registry(`${alias}/`, "personal"), /invalid state/);
+  await assert.rejects(Registry.open(`${alias}/`, "personal"), /invalid state/);
   chmodSync(f.state, 0o755);
-  assert.throws(() => new Registry(f.state, "personal"), /private state mode/);
+  await assert.rejects(
+    Registry.open(f.state, "personal"),
+    /private state mode/,
+  );
   chmodSync(f.state, 0o700);
   const linked = join(f.root, "linked");
   mkdirSync(linked, { mode: 0o700 });
   linkSync(file, join(linked, "registry.sqlite"));
-  assert.throws(() => new Registry(linked, "personal"), /invalid state/);
+  await assert.rejects(Registry.open(linked, "personal"), /invalid state/);
 });
 
 test("Commander supplies help, required options, choices and strict argument parsing", () => {

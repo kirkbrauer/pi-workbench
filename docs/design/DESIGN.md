@@ -17,6 +17,8 @@ The imported baseline below is retained. [Work and resumption](../WORK-AND-RESUM
 refines the morning workflow, Project/Work/goal/task/thread relationships, optional
 multi-repository checkout sets, build-compatible checkout strategies, XDG state
 ownership and sharing boundaries. Worktrees remain a preference, not a requirement.
+[State portability](../STATE-PORTABILITY.md) adds logical Git backups, machine
+rebinding and the separation of immutable revisions from JJ/Gerrit change identities.
 These refinements distinguish current registry behavior from proposed capabilities;
 they do not enable a scheduler, remote provider or UI outside the reviewed tier.
 

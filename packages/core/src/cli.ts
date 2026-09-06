@@ -39,7 +39,7 @@ export function createCli(): Command {
   ) => {
     const options = program.opts<{ state?: string; profile: string }>();
     const selectedProfile = profile(options.profile);
-    const registry = new Registry(
+    const registry = await Registry.open(
       registryDirectory(selectedProfile, options.state),
       selectedProfile,
       create,
@@ -64,7 +64,7 @@ export function createCli(): Command {
   program
     .command("init")
     .description(
-      "Initialize schema 1 in a new private directory; never reset existing state",
+      "Initialize or migrate the private registry; never reset existing state",
     )
     .action(() =>
       execute(

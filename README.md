@@ -1,8 +1,8 @@
 # Pi Workbench
 
 A **TypeScript monorepo** for composable Pi engineering tools with a separately
-trusted execution broker. **Focused Tier 1 is authorized; the first local registry/CLI
-slice is in progress. No worker, UI or execution broker yet.**
+trusted execution broker. **Focused Tier 1 is authorized; the local registry/CLI
+is merged, with typed ORM/migrations under review. No worker, UI or execution broker yet.**
 **Native OpenShell MicroVM diagnostic execution works on both Fedora Linux
 (x86_64/KVM) and macOS (Apple Silicon/Hypervisor.framework).** Authenticated exec,
 workspace writes and cooperative checkpoint/restart are demonstrated with
@@ -48,6 +48,8 @@ All lint policy lives in root `eslint.config.mjs`; see [LINTING.md](docs/LINTING
 `pnpm build`, `pnpm typecheck` and `pnpm test` traverse workspaces. Every workspace
 must provide those scripts. `pnpm lint:fix` applies ESLint fixes and `pnpm format` applies formatting; `pnpm outdated`
 investigates updates without changing the lock. Audit includes dev dependencies.
+[Post-turn checks](docs/POST-TURN-CHECKS.md) proposes an opt-in Pi extension for scoped,
+automatic development feedback; it is not installed or active yet.
 
 For the bounded rootless helper and immutable development image, see
 [DEVELOPMENT-IMAGE.md](docs/DEVELOPMENT-IMAGE.md). Registry/Curation profiles and
@@ -86,7 +88,7 @@ DCO nor agent-created PRs certify Kirk's review.
 
 ## Local Work/Workspace CLI
 
-The first product slice tracks objectives, adopts existing Git worktrees, persists
+The local product slice tracks objectives, adopts existing Git worktrees, persists
 an explicit workspace selection, and rejects stale context or checkout drift.
 See **[packages/core/README.md](packages/core/README.md)** for setup and examples:
 
@@ -100,7 +102,11 @@ workflow; it is not installed into global Pi configuration. [Pi ecosystem choice
 records the inspected upstream tools and where Workbench deliberately differs.
 [Work and resumption](docs/WORK-AND-RESUMPTION.md) describes the morning work view,
 internal goals/tasks/threads, optional multi-repo checkout sets and private XDG storage.
-This local metadata slice grants no execution authority. Bundle assembly is deferred,
+[State portability](docs/STATE-PORTABILITY.md) separates local schema upgrades from
+future logical Git backups, machine transfers and JJ/Gerrit review identities.
+The registry uses Drizzle's typed SQLite schema and versioned migrations; the CLI
+keeps its XDG locations and JSON contract. This local metadata slice grants no
+execution authority. Bundle assembly is deferred,
 not a prerequisite to the local product loop.
 
 ## Layout

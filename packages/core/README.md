@@ -20,7 +20,7 @@ pnpm --silent workbench --help
 ```
 
 The CLI uses **Commander 15.0.0**, Git inspection uses **simple-git 3.36.0**, and
-persistence uses Node's built-in SQLite. No native addon or installation script
+persistence uses **Drizzle ORM 0.45.2** over Node's built-in SQLite. No native addon or installation script
 is required by this package. Node 22 emits an experimental SQLite warning on
 stderr; command results are JSON on stdout. Do not mix those streams when parsing.
 
@@ -123,16 +123,25 @@ checkout sets and special build constraints are optional future capabilities.
 `Registry` in `src/registry.ts` exposes:
 
 - `registryDirectory(profile, optionalOverride)` resolves the CLI's state path without creating files.
-- `new Registry(absoluteDirectory, "personal" | "work", create = false)` and `close()`.
-- `createWork(name, objective)` and `list()`.
+- `await Registry.open(absoluteDirectory, "personal" | "work", create = false)` and `close()`.
+- `await createWork(name, objective)` and `await list()`.
 - `await adopt(workId, absoluteCheckoutRoot)`.
 - `await select(workspaceId, expectedGeneration)` and `await context()`.
 - `await refresh(workspaceId, expectedGeneration)`.
 
-Always close the registry in `finally`. SQLite schema 1 initializes transactionally
-from an empty database only when `create` is explicit. Existing schema 1 reopens;
-unknown versions and unrelated version-0 databases fail without reset. This is the
-initial migration, not a claim that future migrations already exist.
+Opening and all data operations are asynchronous; await them before calling `close()`
+in `finally`. This replaces the previous synchronous constructor/create/list API.
+CLI commands and JSON shapes remain compatible.
+
+SQLite schema **2** initializes from an empty database only when `create` is explicit.
+Opening an existing registry—including for `list`—can apply the reviewed schema-1→2
+upgrade. It preserves all record IDs, profile, context generation/selection and Git
+observations. Wrong-profile opens fail before migration writes. Unknown versions,
+schema drift, missing/altered migration history and unrelated databases fail without
+reset. Failed migration DDL, version changes and journal writes roll back together.
+Before adopting an upgraded release, preserve a closed-state recovery copy. An older
+schema-1 binary will refuse schema 2; downgrading a binary does not undo migration.
+Retain post-upgrade work rather than blindly replacing it with an old backup.
 
 Opaque UUID-based Work, repository, workspace and local environment IDs persist.
 Each workspace initially belongs to one Work. Checkouts sharing a canonical Git
@@ -141,7 +150,14 @@ automatically equated by remote URL. Detached HEAD is valid, unborn/bare repos a
 subdirectories are not. Re-adoption of unchanged checkout/Work bindings is
 idempotent; Work creation intentionally creates a new record each time.
 
-SQLite transactions and foreign keys protect registry updates. Selection/refresh
+Drizzle's typed schema and inferred rows replace handwritten application queries and
+row casts. Its public SQLite proxy callback executes locally against `node:sqlite`;
+there is no remote SQL endpoint. The adapter's small, tested result-shape compatibility
+cast handles array-return/missing-row typing gaps, not domain-row coercion.
+
+SQLite transactions and foreign keys protect registry updates. A per-file async queue
+serializes ORM transactions within one JS process; cross-process exclusion remains
+SQLite `BEGIN IMMEDIATE` with the existing busy timeout. Selection/refresh
 use compare-and-swap generations, rechecked after asynchronous Git inspection, so
 concurrent clients cannot silently overwrite one another's context. Stored and
 returned revisions are HEAD commit IDs, **not hashes of dirty working-tree bytes**.
@@ -168,6 +184,49 @@ abort after five seconds or 16 KiB of observed Git output; this is not a hard
 memory, process-tree or stalled-filesystem confinement boundary. Library unsafe
 operation guards remain enabled. No attribution hooks are modified or bypassed;
 production commands do not commit or push.
+
+## Developing migrations
+
+`src/schema.ts` defines typed tables. Drizzle Kit **0.31.10** maintains reviewed SQL
+and snapshots under `migrations/`, which ships with the compiled package:
+
+```sh
+# From the repository root, after editing the typed schema:
+pnpm db:generate --name=describe_change
+pnpm db:check
+pnpm --filter @pi-workbench/core test
+```
+
+Generation does **not** authorize application. Review the SQL, update the supported
+schema version and its `PRAGMA user_version` migration, and add populated-upgrade,
+failure/rollback and drift tests. Do not use `drizzle-kit push` against user state.
+Both the generated history check and runtime migration tests matter; TypeScript cannot
+prove that arbitrary SQL or a data migration is correct.
+
+The historical baseline retains the original STRICT tables/inline constraints.
+Drizzle Kit does not encode STRICT in its snapshots, so generated rebuilds require
+explicit review to retain it. Schema 2 adds lookup indexes and named unique indexes
+matching Kit's snapshot; the legacy inline uniqueness remains as well. The runner
+validates the actual application schema against applied migration DDL, adopts schema 1
+without replaying its seed rows, checks every applied migration hash/order, and uses
+the official Drizzle migrator inside one outer transaction. Historical SQL is immutable
+once released. Raw SQL is confined to migrations, driver/SQLite administration and
+introspection, not interpolated application queries.
+
+Kit and its matching ORM are explicit root development dependencies because Kit's
+own dynamic imports require that visibility under our no-hoist policy. Runtime core
+declares ORM directly. No peer policy override or native installation script is used.
+The pinned Kit tree currently introduces **one moderate** development-only esbuild
+advisory, [GHSA-67mh-4wv8-2f99](https://github.com/advisories/GHSA-67mh-4wv8-2f99),
+through its deprecated ESM-loader dependency. The existing high/critical audit gate
+is unchanged; no suppression is applied. We use generation/checking only, not an
+esbuild development server or Drizzle Studio. This is a residual dependency risk,
+not a claim that the advisory is fixed.
+
+[State portability](../../docs/STATE-PORTABILITY.md) describes future logical Git
+backups, machine rebinding and distinct Git/JJ/Gerrit revision/review identities.
+No export/import, Git backup, remote transfer or new VCS/review adapter is implemented
+by this local ORM/schema migration.
 
 ## Pi integration and skill
 

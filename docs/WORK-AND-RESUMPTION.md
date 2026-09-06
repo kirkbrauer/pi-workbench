@@ -284,6 +284,9 @@ No current registry command resumes a Pi conversation.
 
 ## Storage ownership and sharing
 
+[State portability](STATE-PORTABILITY.md) further distinguishes schema upgrades,
+logical Git backups and machine transfers, including future JJ/Gerrit identities.
+
 **Use XDG with a dedicated `pi-workbench` namespace on both macOS and Linux.**
 Do not put the cross-project registry in a checkout or derive it from cwd.
 
@@ -349,7 +352,7 @@ summaries are data transfers too, not harmless navigation metadata.
 
 ## Consequences for the current implementation
 
-The current schema-1 registry is a narrow beginning: Work, local repository and
+The current registry (schema 2 after the ORM migration) is a narrow beginning: Work, local repository and
 workspace records, one local environment identifier, selected context and generation.
 It has **no Project, CheckoutSet, Goal, Task, Loop, external-reference or Thread tables, session
 adapter, remote index or sharing protocol**. Do not describe its `context show` as conversation

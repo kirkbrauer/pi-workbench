@@ -10,7 +10,8 @@
     }
   },
   "files": [
-    "dist/src"
+    "dist/src",
+    "migrations"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -19,6 +20,7 @@
   },
   "dependencies": {
     "commander": "15.0.0",
+    "drizzle-orm": "0.45.2",
     "simple-git": "3.36.0"
   }
 }

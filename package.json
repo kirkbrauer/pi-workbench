@@ -26,13 +26,15 @@
     "audit": "pnpm audit --audit-level high",
     "outdated": "pnpm -r outdated",
     "workbench": "node packages/core/dist/src/cli.js",
+    "db:generate": "pnpm --filter @pi-workbench/core exec drizzle-kit generate",
+    "db:check": "pnpm --filter @pi-workbench/core exec drizzle-kit check",
     "registry:plan": "node packages/tooling/dist/src/registry.js",
     "bundle:plan": "node packages/tooling/dist/src/bundle-plan.js",
     "bundle:inventory": "node packages/tooling/dist/src/bundle-inventory.js inventory",
     "bundle:verify": "node packages/tooling/dist/src/bundle-inventory.js verify",
     "check:sources": "node --experimental-strip-types packages/tooling/src/sources.ts",
     "check:dependencies": "node packages/tooling/dist/src/dependencies.js",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm check:toolchain && pnpm check:dependencies"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm check:toolchain && pnpm check:dependencies && pnpm db:check"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",
@@ -40,6 +42,8 @@
     "@eslint/js": "10.0.1",
     "@stylistic/eslint-plugin": "5.10.0",
     "@types/node": "22.20.1",
+    "drizzle-kit": "0.31.10",
+    "drizzle-orm": "0.45.2",
     "eslint": "10.10.0",
     "globals": "17.12.0",
     "typescript": "7.0.2"
