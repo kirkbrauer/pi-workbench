@@ -39,10 +39,12 @@ Dependency installation and execution belong in an approved development boundary
 No auth directories or host sockets are needed. New hosts must explicitly install
 the pinned Node distribution; this repository does not upgrade host tools.
 
-`pnpm check` runs Biome lint/format checks, strict TypeScript checking, workspace
-compilation/tests, exact tool versions and dependency source/policy checks.
+`pnpm check` runs Biome formatting checks, workspace-wide ESLint recommended
+JavaScript/TypeScript rules and declaration spacing, strict TypeScript checking,
+workspace compilation/tests, exact tool versions and dependency source/policy checks.
+All lint policy lives in root `eslint.config.mjs`; see [LINTING.md](docs/LINTING.md).
 `pnpm build`, `pnpm typecheck` and `pnpm test` traverse workspaces. Every workspace
-must provide those scripts. `pnpm format` applies formatting; `pnpm outdated`
+must provide those scripts. `pnpm lint:fix` applies ESLint fixes and `pnpm format` applies formatting; `pnpm outdated`
 investigates updates without changing the lock. Audit includes dev dependencies.
 
 For the bounded rootless helper and immutable development image, see

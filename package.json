@@ -13,7 +13,9 @@
     "format:staged": "node --experimental-strip-types packages/tooling/src/format-staged.ts check",
     "install:format-hook": "node --experimental-strip-types packages/tooling/src/format-staged.ts install",
     "test:format-hook": "pnpm build && WORKBENCH_EXERCISE_FORMAT_HOOK=1 node --test packages/tooling/dist/tests/format-staged.test.js",
-    "lint": "biome check .",
+    "format:check": "biome check .",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix --max-warnings 0",
     "build": "pnpm -r run build",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm build && pnpm -r run test",
@@ -26,12 +28,16 @@
     "registry:plan": "node packages/tooling/dist/src/registry.js",
     "check:sources": "node --experimental-strip-types packages/tooling/src/sources.ts",
     "check:dependencies": "node packages/tooling/dist/src/dependencies.js",
-    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:toolchain && pnpm check:dependencies"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm check:toolchain && pnpm check:dependencies"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",
     "@earendil-works/pi-coding-agent": "0.85.0",
+    "@eslint/js": "10.0.1",
+    "@stylistic/eslint-plugin": "5.10.0",
     "@types/node": "22.20.1",
+    "eslint": "10.10.0",
+    "globals": "17.12.0",
     "typescript": "7.0.2"
   }
 }

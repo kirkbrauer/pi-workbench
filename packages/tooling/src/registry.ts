@@ -107,6 +107,7 @@ export function registryInstallPlan(profile: RegistryProfile): {
         : "public-registry-profile",
   };
 }
+
 if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href

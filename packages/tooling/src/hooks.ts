@@ -18,6 +18,7 @@ const pins = JSON.parse(
     "utf8",
   ),
 );
+
 function git(args: string[], cwd = process.cwd(), expected = 0): string {
   const result = spawnSync("git", args, {
     cwd,
@@ -32,6 +33,7 @@ function git(args: string[], cwd = process.cwd(), expected = 0): string {
   );
   return result.stdout.trim();
 }
+
 const hooks = resolve(git(["config", "--path", "--get", "core.hooksPath"]));
 for (const [name, digest] of Object.entries(pins.hooks.files)) {
   const path = join(hooks, name);
