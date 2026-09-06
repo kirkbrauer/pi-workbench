@@ -1,94 +1,102 @@
-# Tier 0 review handoff — locked bundle dependency plan
+# Tier 1 review handoff — local Work/Workspace registry
 
-## Accepted base
+## Scope transition and base
 
-Development continues on **macOS**. Kirk merged inventory-verifier PR #10 on
-2026-09-06 as `5e679feb1ae417e511d673728e27d52968539e10`. This increment starts there
-on `feat/t0-bundle-dependency-plan`, not on an unmerged stack.
+Kirk explicitly requested: **“let's proceed with the focused Tier 1”**, after
+reviewing/merging the foundation. PR #11 is merged as
+`5d3ae5203f7f8d4d7d97a6e014d93e8459aade5a`; this increment starts directly there on
+`feat/t1-workspace-registry`. Development remains on macOS.
 
-Prior [Foundation run 34009626908](https://github.com/kirkbrauer/pi-workbench/actions/runs/34009626908)
-passed for candidate `6c37e0ce4c333b6f3ed3c7093e6483be5a0528e9`, synthetic merge
-`2f2498be061184a080ba5df20d8ce8184b50e78e`. Runner image: ubuntu-24.04,
-20260831.293.1; Node 22.23.2. JS/TS: 36 passed, one actual-session hook integration
-skip. Python: 11 passed, one Mac-system-OpenSSL skip. This is baseline evidence,
-not validation of the new planner. Native diagnostics, formatting and ESLint were
-already merged; see [BOARD.md](BOARD.md).
+The current priority is DESIGN §§5/9/15: a usable local work loop, not additional
+bundle infrastructure. Kirk also requested Git/CLI library reuse, inspection of
+Pi's ecosystem, a CLI skill and a package README. Those are included here.
 
-Unchanged input identities:
-
-| Input | SHA-256 |
-|---|---|
-| `config/foundation.json` | `08f73a1569527537fa7a671648122363b2018ab62368896d84eecef4a4d8377c` |
-| `pnpm-lock.yaml` | `d24a9852d761c05bd0a7f4ec4fced3c98cd9b65052dc6c05a3c0a2523e84373a` |
-| Root `eslint.config.mjs` | `875934e429605dbcd2aebc5ab8c5e52af16ec3863efb3a1bdb4d0044373d12e3` |
+This authorization opens **focused Tier 1**, not Tier 2 worker execution. Existing
+Landlock/raw-stop scoped acceptance remains intact; guest PID and broader boundary
+qualification gaps remain unresolved. No failed native test is reclassified as a
+pass. No new native VM, host install, remote enrollment, credential or service
+change is performed. `AGENTS.md` records this scope rather than a blanket waiver.
 
 ## This increment
 
-- `packages/tooling/src/bundle-plan.ts`: offline lock-graph projection for an
-  explicit Pi + declared foundation-tooling dependency seed profile.
-- `packages/tooling/tests/bundle-plan.test.ts`: 13 focused tests, including actual
-  locked platform payloads, required/optional/peer failures and resource budgets.
-- `bundle:plan` root command and [BUNDLE-PLAN.md](BUNDLE-PLAN.md) usage/contract.
-- Exposes/reuses the inventory verifier's existing bounded metadata reader. Its
-  file checks and inventory format are unchanged; existing tests remain intact.
-- No dependency/lock change, downloader, artifact unpacking, native binary execution,
-  remote installer, runtime policy, CI rule or attribution-hook change.
+- `packages/core/`: persistent Work/repository/workspace/local-environment IDs,
+  existing-worktree adoption and SQLite context with compare-and-swap generations.
+- Read-only Git observations through simple-git, explicit identity/revision/branch
+  drift checks, explicit metadata refresh without checkout mutation.
+- Commander CLI with help/subcommands, required profile, dedicated XDG state defaults,
+  an explicit state override and JSON results; no collision with Pi-owned state.
+- `packages/core/README.md`: package setup, walkthrough, API, state/recovery and limits.
+- `docs/WORK-AND-RESUMPTION.md`: morning workflow and storage/sharing refinement;
+  optional multi-repo checkout sets, build constraints, internal goals/tasks/loops
+  and conversation threads are design requirements, not implemented features.
+- `skills/workbench/SKILL.md`: opt-in task-oriented Pi guidance; no global install,
+  automatic harness reload, candidate extension execution or permission grants.
+- `docs/PI-ECOSYSTEM.md`: pinned upstream observations; reuse public conventions,
+  not private Pi internals. TypeBox/shared-action and Pi TUI consumers follow later.
 
-The actual graph contains platform esbuild and clipboard packages, and explicitly
-unbound optional peers. Darwin retains both compatible clipboard variants; it is
-not safe to prune one by filename intuition. A graph with 129 Darwin/128 Linux
-snapshots is **not** a complete runtime SBOM. Node archive identity, tarball bytes,
-manifests/licenses, bundled dependency contents, helper/native libraries and exact
-OS baselines still need verification. Existing checkout-oriented development tools
-also require deliberate entrypoint selection before calling anything standalone.
+Direct runtime additions: Commander **15.0.0**, simple-git **3.36.0**. Both satisfy
+the release quarantine. Six new registry records, **285 total**; existing lock
+records are unchanged. SQLite comes from pinned Node 22.23.2 and emits its honest
+experimental-feature warning. No lifecycle script, hoist/peer/source-policy exception,
+CI/lint policy relaxation or attribution integration change is introduced.
 
 ## Review focus
 
-1. Peer-context identity and graph traversal: required edges cannot be dropped;
-   compatible optionals are retained; incompatible optional edges remain visible;
-   no ambient or registry resolution repairs missing entries.
-2. Scope of evidence: SRI and URLs identify declared inputs, not inspected bytes or
-   publisher trust. Peer/engine ranges and context-to-binding semantics remain
-   unvalidated. The plan's caller-supplied source SHA is not a Git attestation.
-3. Failure/limit behavior: duplicate/aliased/tagged YAML, unsupported resolution
-   forms/fields, unsafe identities, missing nodes and metadata amplification fail.
-   This is ordinary host tooling for trusted stationary inputs, not a broker or
-   hostile-filesystem boundary. No check was relaxed for the new code.
+1. **Useful context:** two Git worktrees have independent workspace IDs but share a
+   local repository record. Selection survives process restart; HEAD/branch drift
+   fails rather than rewriting files. Dirty source is retained but not snapshot-bound.
+2. **State semantics:** explicit init, schema-1 reopen/empty-database migration,
+   future/unrelated schema refusal, profile mismatch, transactional rollback and
+   competing client generations. IDs are local registry identities, not host attestations.
+3. **Reuse and limits:** no bespoke argument parser or subprocess queue; library
+   unsafe-operation guards stay enabled. Registry permissions and Git observation
+   budgets are not a sandbox or verification-to-execution handoff. No current result
+   may authorize a test, agent, SSH operation or publication.
+4. **Agent usability:** skill commands match the actual CLI and teach resume-before-
+   create, stdout JSON parsing, explicit profile/generation and non-destructive recovery.
+   The pinned skill-loader inspection retains positive/negative cases but does not
+   qualify the public SDK: Pi 0.85.0 import failed on undeclared `pi-server`. Review
+   that deliberately narrower test boundary separately; the original failure is
+   retained and reproducible in [PI-ECOSYSTEM.md](PI-ECOSYSTEM.md). No runtime patch,
+   dependency injection or private production import hides the SDK failure.
 
-## Candidate verification
-
-Use the already approved pinned Node 22.23.2 / Corepack 0.34.6 / pnpm 11.25.0:
+## Validation and evidence
 
 ```sh
 pnpm check
 pnpm audit --audit-level high
 pnpm check:hooks
-node --test packages/tooling/dist/tests/bundle-plan.test.js
-# Read-only plans; supply the actual source SHA and new intended output paths:
-pnpm --silent bundle:plan darwin-arm64 SOURCE_SHA > NEW_MAC_PLAN.json
-pnpm --silent bundle:plan linux-x64-gnu SOURCE_SHA > NEW_LINUX_PLAN.json
+pnpm --filter @pi-workbench/core test
+pnpm --silent workbench --help
 ```
 
-Exact committed SHA, input/source/output digests, local outcomes and fresh hosted
-merge/image identities are attached to the PR after commit. Earlier #10 CI does
-not validate this increment. No worker VM/image is applicable to these host-side
-synthetic/metadata tests. Cross-target planning on macOS is not a Linux runtime
-smoke test. Hosted Linux repeats the tool's tests, not a packaged Pi launch.
+The core tests use disposable local Git worktrees with raw synthetic commit objects;
+no actual commit/push, identity override or attribution bypass is used to make
+fixtures. Real project commits/pushes retain upstream hooks. Historical hook success
+and intentional-refusal fixtures are not recast as new integration tests.
 
-## Remaining gates / next steps
+Candidate source/configuration/lock digests, exact committed SHA, clean-clone checks
+and fresh hosted CI identities will be attached to the PR. Until then, local checks
+are development evidence, not a published candidate acceptance claim. Worker image
+is not applicable to these host-side metadata and synthetic fixture tests.
 
-[Accepted runtime limitations](ACCEPTED-RUNTIME-LIMITATIONS.md) remain scoped:
-Landlock absence and raw-stop loss are observed failures accepted by Kirk, not
-passing tests. Guest PID controls, aggregate Mac host quotas and broad credential/
-filesystem/network qualification remain unresolved. No untrusted worker is admitted.
-Native helper `bf4a177bb407642b6e452937d687971a36285d96` and exact runtime/image/config
-identities remain in [Mac evidence](evidence/macos-e2e.txt) and
-[Fedora evidence](evidence/native-spike.txt); these runs were not repeated here.
+Prior #11 [Foundation run 34011202853](https://github.com/kirkbrauer/pi-workbench/actions/runs/34011202853)
+validated candidate `79afd9e00ab11a8b29960b2bb362679ed8cf1923` on merge
+`8a4302252b8bd9dd7ace6695f3eb1629b727d042`, ubuntu-24.04 image
+20260831.293.1, Node 22.23.2: 49 JS/TS passed + one actual-session hook integration
+skip, 11 Python passed + one Mac OpenSSL skip. That is baseline evidence only,
+not validation of this registry.
 
-After review/merge, collect/verify exact archive bytes and package metadata, then
-implement reproducible materialization/assembly and offline no-model runtime tests.
-Do not mistake inspected installed packages for SRI-verified source archives or a
-successful planner for a ready release. Safe extraction, activation/rollback and
-real host/account/key enrollment remain separately reviewed increments under
-[REMOTE-BOOTSTRAP.md](REMOTE-BOOTSTRAP.md). Preserve host tools, workloads, hooks,
-credentials and unpublished source. No agent merge/enqueue or inferred tier acceptance.
+## Remaining Tier 1 work
+
+Next review-sized increments: Project/repository membership, optional checkout-set,
+Work/reference, goal/task and thread-reference contracts with fixture state/migrations;
+shared typed action preparation and fixture approval binding; fake-provider durable
+run state, bounded artifacts and duplicate-request reconciliation. Keep the common
+single-repo case simple; do not build a generic scheduler or Repo adapter now. Registry/context is the first slice, not complete Tier 1 or a broker.
+After Kirk's tier review, one real sandboxed Pi implementation task remains the
+operational goal, subject to its specific runtime/credential qualification gates.
+
+Keep bundles, remote placement/enrollment, rich UI, team distribution and a general
+workflow engine off this critical path. Do not merge/enqueue for Kirk. Preserve
+unpublished work and the running host harness/toolchain.
