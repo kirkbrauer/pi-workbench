@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1788710755364,
+      "tag": "0000_registry_v1",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788710852241,
+      "tag": "0001_registry_indexes",
+      "breakpoints": true
+    }
+  ]
+}

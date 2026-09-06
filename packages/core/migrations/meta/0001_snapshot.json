@@ -1,0 +1,296 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "06c00bf4-f4f0-4c7a-90cf-03e72dc33df4",
+  "prevId": "41ed8ba2-6736-4b51-9017-1382804a3497",
+  "tables": {
+    "context": {
+      "name": "context",
+      "columns": {
+        "singleton": {
+          "name": "singleton",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "generation": {
+          "name": "generation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "workspaceId": {
+          "name": "workspaceId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "context_workspaceId_workspaces_id_fk": {
+          "name": "context_workspaceId_workspaces_id_fk",
+          "tableFrom": "context",
+          "tableTo": "workspaces",
+          "columnsFrom": ["workspaceId"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "context_singleton": {
+          "name": "context_singleton",
+          "value": "\"context\".\"singleton\" = 1"
+        },
+        "context_generation": {
+          "name": "context_generation",
+          "value": "\"context\".\"generation\" >= 0"
+        }
+      }
+    },
+    "metadata": {
+      "name": "metadata",
+      "columns": {
+        "singleton": {
+          "name": "singleton",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "profile": {
+          "name": "profile",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "environmentId": {
+          "name": "environmentId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "metadata_singleton": {
+          "name": "metadata_singleton",
+          "value": "\"metadata\".\"singleton\" = 1"
+        },
+        "metadata_profile": {
+          "name": "metadata_profile",
+          "value": "\"metadata\".\"profile\" IN ('personal', 'work')"
+        }
+      }
+    },
+    "repositories": {
+      "name": "repositories",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "commonDir": {
+          "name": "commonDir",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "commonIdentity": {
+          "name": "commonIdentity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "repositories_commonDir_unique": {
+          "name": "repositories_commonDir_unique",
+          "columns": ["commonDir"],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "works": {
+      "name": "works",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "objective": {
+          "name": "objective",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "workspaces": {
+      "name": "workspaces",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "workId": {
+          "name": "workId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "repositoryId": {
+          "name": "repositoryId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "environmentId": {
+          "name": "environmentId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "root": {
+          "name": "root",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "gitDir": {
+          "name": "gitDir",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "commonDir": {
+          "name": "commonDir",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "commonIdentity": {
+          "name": "commonIdentity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "revision": {
+          "name": "revision",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "branch": {
+          "name": "branch",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "workspaces_root_unique": {
+          "name": "workspaces_root_unique",
+          "columns": ["root"],
+          "isUnique": true
+        },
+        "workspaces_gitDir_unique": {
+          "name": "workspaces_gitDir_unique",
+          "columns": ["gitDir"],
+          "isUnique": true
+        },
+        "workspaces_work_id_idx": {
+          "name": "workspaces_work_id_idx",
+          "columns": ["workId"],
+          "isUnique": false
+        },
+        "workspaces_repository_id_idx": {
+          "name": "workspaces_repository_id_idx",
+          "columns": ["repositoryId"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "workspaces_workId_works_id_fk": {
+          "name": "workspaces_workId_works_id_fk",
+          "tableFrom": "workspaces",
+          "tableTo": "works",
+          "columnsFrom": ["workId"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "workspaces_repositoryId_repositories_id_fk": {
+          "name": "workspaces_repositoryId_repositories_id_fk",
+          "tableFrom": "workspaces",
+          "tableTo": "repositories",
+          "columnsFrom": ["repositoryId"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

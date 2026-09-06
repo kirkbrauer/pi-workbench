@@ -41,6 +41,11 @@ do not resolve packages from candidate source or change host tools to fix it.
 
 ## Resume before creating
 
+Before using a newly upgraded Workbench release, follow its database recovery-copy
+instructions. Opening an existing registry can apply reviewed schema migrations,
+even for `list`; it does not initialize missing state. Never run raw migration SQL,
+edit the migration journal, or commit the live SQLite database to Git to fix an error.
+
 ```sh
 wb list
 wb context show

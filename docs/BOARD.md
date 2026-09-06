@@ -3,10 +3,10 @@
 ## Current inventory — 2026-09-06
 
 **Focused Tier 1 authorized by Kirk; development continues on macOS.**
-Current slice: local registry/context and CLI, not an execution broker, worker, UI
-or workflow engine. Bundle/distribution work is deferred, not a product prerequisite.
-Merged baseline: `5d3ae5203f7f8d4d7d97a6e014d93e8459aade5a` (PRs #1–#3, #6, #7,
-ESLint #8 carried to main by #9, inventory verifier #10 and dependency planner #11). PR #5 was
+Current slice: typed ORM and local schema migrations for the merged registry/CLI,
+not an execution broker, worker, UI or workflow engine. Bundle/distribution work is deferred, not a product prerequisite.
+Merged baseline: `a8b4e4dfb3086e081e5cca6c343661aaabc6e24b` (PRs #1–#3, #6, #7,
+ESLint #8 via #9, inventory verifier #10, dependency planner #11 and registry #12). PR #5 was
 superseded/closed. The #8/#9 stack is
 fully reconciled; no formatting/lint increment remains waiting on an old base.
 
@@ -20,7 +20,7 @@ resource and credential/boundary qualification does not permit untrusted workers
 |---|---|---|---|
 | T0-01 / 0 | Pinned Corepack/pnpm TypeScript monorepo and dependency policy | merged, #1 | Exact versions, frozen/no-script installs, source/age/integrity/audit gates; maintain pins |
 | T0-02 / 0 | Preserve/exercise upstream attribution | merged, #1 | Hash checks and real-session commit/push/intentional-refusal fixtures; preserve identity/hooks |
-| T0-03 / 0 | Hosted foundation and forge gates | merged | PR/merge-group workflow; #11 run 34011202853 passed; personal-owner merge queue unsupported, not tested |
+| T0-03 / 0 | Hosted foundation and forge gates | merged | PR/merge-group workflow; #12 run 34043738163 passed; personal-owner merge queue unsupported, not tested |
 | T0-04 / 0 | Native OpenShell diagnostics on Fedora and Mac | merged, #2/#3/#6 | Real VM + mTLS exec + workspace write + cooperative checkpoint/restart; not worker qualification |
 | T0-05 / 0 | Worker resource and credential/boundary qualification | blocked | Guest PID budget absent; broad credential/network conformance and in-VM development userspace unverified; two scoped limitations accepted, not blanket waiver |
 | T0-06 / 0 | Foundation review and scope transition | accepted for focused Tier 1 | Kirk explicitly authorized Tier 1 after foundation merges; this does not turn T0-05 gaps into passes or admit workers |
@@ -29,7 +29,9 @@ resource and credential/boundary qualification does not permit untrusted workers
 | T0-09 / 0 | Offline bundle content inventory/verification | merged, #10 | Canonical metadata, external expected digest/platform, exact bytes/modes, bounded scans and rejection fixtures; no installer or payload execution |
 | T0-10a / 0 | Locked bundle dependency plan | merged, #11 | 13 tests; metadata graph only, no assembly/SBOM claim; not a prerequisite to core product behavior |
 | Deferred | Self-contained bundle builder and managed installation/updates | deferred | Distribution/enrollment requirements retained; no further bundle iteration on the current critical path |
-| CORE-001a / 1 | Persistent local Work/Workspace registry, context and CLI | candidate, this increment | Stable IDs, two worktrees, reopen/drift/profile/concurrent-client tests; Commander/simple-git; package README and opt-in Pi skill |
+| CORE-001a / 1 | Persistent local Work/Workspace registry, context and CLI | merged, #12 | Stable IDs, two worktrees, reopen/drift/profile/concurrent-client tests; Commander/simple-git; package README and opt-in Pi skill |
+| CORE-001a.orm / 1 | Typed SQLite ORM and schema migrations | candidate, this increment | Drizzle queries/inferred rows, preserved schema-1 data, atomic upgrade/journal checks and regression tests; backup/transfer/JJ/Gerrit documented, not implemented |
+| DEV-001 / tooling | Scoped post-turn checks with direct model feedback | requested next, not active | [Lightweight Pi extension contract](POST-TURN-CHECKS.md); coalesced checks plus TypeScript-first LSP diagnostics, bounded repair feedback, no auto-install/reload or replacement of CI |
 | CORE-001a.1 / 1 | Project/Work/goals/tasks/thread and optional checkout-set contracts | next design consumer | [Work and resumption](WORK-AND-RESUMPTION.md); explicit migrations/fixtures, no live sessions, scheduler or Repo adapter |
 | CORE-001b / 1 | Typed prepared actions and fixture policy/approval binding | pending | Use pinned Pi ecosystem schema conventions; altered/expired approvals and invalid context must fail |
 | CORE-001c / 1 | Fake-provider run state and bounded artifacts | pending | Duplicate-request reconciliation, output bounds and revision-bound evidence; no actual worker |

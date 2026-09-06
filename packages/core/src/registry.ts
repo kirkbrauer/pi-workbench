@@ -1,37 +1,25 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import {
-  closeSync,
-  existsSync,
-  lstatSync,
-  mkdirSync,
-  openSync,
-  realpathSync,
-} from "node:fs";
-import { isAbsolute, join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { type Checkout, inspectCheckout, sameCheckout } from "./checkout.js";
+import { eq, sql } from "drizzle-orm";
+import { inspectCheckout, sameCheckout } from "./checkout.js";
+import {
+  connectDatabase,
+  type QueryDatabase,
+  type StoreDatabase,
+  serialized,
+  stateFile,
+} from "./database.js";
+import { migrateRegistry } from "./migrations.js";
+import * as schema from "./schema.js";
 
-export type Profile = "personal" | "work";
+export type Profile = (typeof schema.metadata.$inferSelect)["profile"];
 
-export interface Work {
-  id: string;
-  name: string;
-  objective: string;
-}
+export type Work = typeof schema.works.$inferSelect;
 
-export interface Repository {
-  id: string;
-  commonDir: string;
-  commonIdentity: string;
-}
+export type Repository = typeof schema.repositories.$inferSelect;
 
-export interface Workspace extends Checkout {
-  id: string;
-  workId: string;
-  repositoryId: string;
-  environmentId: string;
-}
+export type Workspace = typeof schema.workspaces.$inferSelect;
 
 export interface Context {
   generation: number;
@@ -59,177 +47,146 @@ function id(value: string, kind: string): void {
   );
 }
 
-function privatePath(path: string, directory: boolean): void {
-  const stat = lstatSync(path);
-  assert.ok(
-    process.getuid && process.geteuid && process.getuid() === process.geteuid(),
-    "ordinary POSIX user required",
-  );
-  assert.equal(stat.uid, process.getuid(), "state must be operator-owned");
-  assert.ok(
-    directory ? stat.isDirectory() : stat.isFile() && stat.nlink === 1,
-    "invalid state file/directory",
-  );
-  assert.equal(
-    stat.mode & 0o7777,
-    directory ? 0o700 : 0o600,
-    "private state mode required",
-  );
-}
-
 /** Operator-owned local metadata only. Not a broker, grant store or worker API. */
 export class Registry {
-  readonly #db: DatabaseSync;
+  readonly #db: StoreDatabase;
+  readonly #sqlite: DatabaseSync;
+  readonly #file: string;
   readonly environmentId: string;
   readonly profile: Profile;
 
-  constructor(directory: string, selectedProfile: Profile, create = false) {
-    this.profile = profile(selectedProfile);
-    assert.ok(isAbsolute(directory), "absolute state directory required");
-    if (create && !existsSync(directory))
-      mkdirSync(directory, { mode: 0o700, recursive: true });
-    privatePath(resolve(directory), true);
-    const file = join(realpathSync(directory), "registry.sqlite");
-    if (create && !existsSync(file)) closeSync(openSync(file, "wx", 0o600));
-    privatePath(file, false);
-    for (const suffix of ["-journal", "-wal", "-shm"]) {
-      if (lstatSync(file + suffix, { throwIfNoEntry: false }))
-        privatePath(file + suffix, false);
-    }
-    this.#db = new DatabaseSync(file, {
-      enableForeignKeyConstraints: true,
-      enableDoubleQuotedStringLiterals: false,
-      allowExtension: false,
-    });
-    try {
-      this.#db.exec("PRAGMA busy_timeout=1000; PRAGMA trusted_schema=OFF;");
-      this.environmentId = this.#transaction(() => {
-        const version = this.#db
-          .prepare("PRAGMA user_version")
-          .get()?.user_version;
-        if (version === 0) {
-          assert.ok(create, "uninitialized registry; run init");
-          assert.equal(
-            this.#db.prepare("SELECT count(*) AS n FROM sqlite_schema").get()
-              ?.n,
-            0,
-            "refusing to initialize an unrelated database",
-          );
-          this.#db.exec(`
-            CREATE TABLE metadata (singleton INTEGER PRIMARY KEY CHECK(singleton=1), profile TEXT NOT NULL CHECK(profile IN ('personal','work')), environmentId TEXT NOT NULL) STRICT;
-            CREATE TABLE works (id TEXT PRIMARY KEY, name TEXT NOT NULL, objective TEXT NOT NULL) STRICT;
-            CREATE TABLE repositories (id TEXT PRIMARY KEY, commonDir TEXT NOT NULL UNIQUE, commonIdentity TEXT NOT NULL) STRICT;
-            CREATE TABLE workspaces (
-              id TEXT PRIMARY KEY, workId TEXT NOT NULL REFERENCES works(id),
-              repositoryId TEXT NOT NULL REFERENCES repositories(id), environmentId TEXT NOT NULL,
-              root TEXT NOT NULL UNIQUE, gitDir TEXT NOT NULL UNIQUE, commonDir TEXT NOT NULL,
-              commonIdentity TEXT NOT NULL, revision TEXT NOT NULL, branch TEXT
-            ) STRICT;
-            CREATE TABLE context (singleton INTEGER PRIMARY KEY CHECK(singleton=1), generation INTEGER NOT NULL CHECK(generation>=0), workspaceId TEXT REFERENCES workspaces(id)) STRICT;
-            INSERT INTO context VALUES (1, 0, NULL);
-            PRAGMA user_version=1;
-          `);
-          this.#db
-            .prepare("INSERT INTO metadata VALUES (1, ?, ?)")
-            .run(this.profile, `env_${randomUUID()}`);
-        } else {
-          assert.equal(
-            version,
-            1,
-            "unsupported registry schema; no automatic downgrade/reset",
-          );
-        }
-        const metadata = this.#db
-          .prepare("SELECT * FROM metadata WHERE singleton=1")
-          .get();
-        assert.equal(
-          metadata?.profile,
-          this.profile,
-          "registry profile mismatch",
-        );
-        assert.equal(typeof metadata?.environmentId, "string");
-        const environmentId = String(metadata?.environmentId);
-        id(environmentId, "env");
-        return environmentId;
+  private constructor(
+    file: string,
+    sqlite: DatabaseSync,
+    environmentId: string,
+    selectedProfile: Profile,
+  ) {
+    this.#file = file;
+    this.#sqlite = sqlite;
+    this.#db = connectDatabase(sqlite);
+    this.environmentId = environmentId;
+    this.profile = selectedProfile;
+  }
+
+  static async open(
+    directory: string,
+    selectedProfile: Profile,
+    create = false,
+  ): Promise<Registry> {
+    profile(selectedProfile);
+    const file = stateFile(directory, create);
+    return serialized(file, async () => {
+      const sqlite = new DatabaseSync(file, {
+        enableForeignKeyConstraints: true,
+        enableDoubleQuotedStringLiterals: false,
+        allowExtension: false,
       });
-    } catch (error) {
-      this.#db.close();
-      throw error;
-    }
+      try {
+        sqlite.exec("PRAGMA busy_timeout=1000; PRAGMA trusted_schema=OFF;");
+        sqlite.exec("BEGIN IMMEDIATE");
+        let environmentId: string;
+        try {
+          environmentId = await migrateRegistry(
+            sqlite,
+            selectedProfile,
+            create,
+          );
+          sqlite.exec("COMMIT");
+        } catch (error) {
+          sqlite.exec("ROLLBACK");
+          throw error;
+        }
+        return new Registry(file, sqlite, environmentId, selectedProfile);
+      } catch (error) {
+        sqlite.close();
+        throw error;
+      }
+    });
   }
 
+  /** Await all operations before closing this connection. */
   close(): void {
-    this.#db.close();
+    this.#sqlite.close();
   }
 
-  #transaction<T>(operation: () => T): T {
-    this.#db.exec("BEGIN IMMEDIATE");
-    try {
-      const result = operation();
-      this.#db.exec("COMMIT");
-      return result;
-    } catch (error) {
-      this.#db.exec("ROLLBACK");
-      throw error;
-    }
+  #transaction<T>(operation: (db: QueryDatabase) => Promise<T>): Promise<T> {
+    return serialized(this.#file, () =>
+      this.#db.transaction(operation, { behavior: "immediate" }),
+    );
   }
 
-  createWork(name: string, objective: string): Work {
+  async createWork(name: string, objective: string): Promise<Work> {
     text(name, 200);
     text(objective, 4_000);
     const work = { id: `work_${randomUUID()}`, name, objective };
-    this.#db
-      .prepare("INSERT INTO works VALUES (?, ?, ?)")
-      .run(work.id, name, objective);
-    return work;
+    return this.#transaction(async (db) => {
+      await db.insert(schema.works).values(work).run();
+      return work;
+    });
   }
 
   /** Stored observations, deliberately not a fresh checkout/permission assertion. */
-  list(): {
+  list(): Promise<{
     works: Work[];
     repositories: Repository[];
     workspaces: Workspace[];
     context: Context;
-  } {
-    return this.#transaction(() => ({
-      context: this.#context(),
-      works: this.#db
-        .prepare("SELECT * FROM works ORDER BY id")
-        .all() as unknown as Work[],
-      repositories: this.#db
-        .prepare("SELECT * FROM repositories ORDER BY id")
-        .all() as unknown as Repository[],
-      workspaces: this.#db
-        .prepare("SELECT * FROM workspaces ORDER BY id")
-        .all() as unknown as Workspace[],
+  }> {
+    return this.#transaction(async (db) => ({
+      context: await this.#context(db),
+      works: await db
+        .select()
+        .from(schema.works)
+        .orderBy(schema.works.id)
+        .all(),
+      repositories: await db
+        .select()
+        .from(schema.repositories)
+        .orderBy(schema.repositories.id)
+        .all(),
+      workspaces: await db
+        .select()
+        .from(schema.workspaces)
+        .orderBy(schema.workspaces.id)
+        .all(),
     }));
   }
 
-  #workspace(workspaceId: string): Workspace {
+  async #workspace(db: QueryDatabase, workspaceId: string): Promise<Workspace> {
     id(workspaceId, "ws");
-    const workspace = this.#db
-      .prepare("SELECT * FROM workspaces WHERE id=?")
-      .get(workspaceId) as unknown as Workspace | undefined;
+    const workspace = await db
+      .select()
+      .from(schema.workspaces)
+      .where(eq(schema.workspaces.id, workspaceId))
+      .get();
     assert.ok(workspace, "unknown workspace in this profile");
     assert.equal(
       workspace.environmentId,
       this.environmentId,
       "environment mismatch",
     );
-    return { ...workspace };
+    return workspace;
   }
 
   async adopt(workId: string, checkoutRoot: string): Promise<Workspace> {
     id(workId, "work");
-    assert.ok(
-      this.#db.prepare("SELECT id FROM works WHERE id=?").get(workId),
-      "unknown Work in this profile",
-    );
+    await this.#transaction(async (db) => {
+      assert.ok(
+        await db
+          .select({ id: schema.works.id })
+          .from(schema.works)
+          .where(eq(schema.works.id, workId))
+          .get(),
+        "unknown Work in this profile",
+      );
+    });
     const checkout = await inspectCheckout(checkoutRoot);
-    return this.#transaction(() => {
-      const existing = this.#db
-        .prepare("SELECT * FROM workspaces WHERE root=?")
-        .get(checkout.root) as unknown as Workspace | undefined;
+    return this.#transaction(async (db) => {
+      const existing = await db
+        .select()
+        .from(schema.workspaces)
+        .where(eq(schema.workspaces.root, checkout.root))
+        .get();
       if (existing) {
         assert.equal(
           existing.workId,
@@ -237,26 +194,26 @@ export class Registry {
           "checkout already belongs to another Work",
         );
         sameCheckout(existing, checkout);
-        return { ...existing };
+        return existing;
       }
-      let repository = this.#db
-        .prepare("SELECT * FROM repositories WHERE commonDir=?")
-        .get(checkout.commonDir) as unknown as Repository | undefined;
-      if (repository) {
+      let repository = await db
+        .select()
+        .from(schema.repositories)
+        .where(eq(schema.repositories.commonDir, checkout.commonDir))
+        .get();
+      if (repository)
         assert.equal(
           repository.commonIdentity,
           checkout.commonIdentity,
           "repository identity drift",
         );
-      } else {
+      else {
         repository = {
           id: `repo_${randomUUID()}`,
           commonDir: checkout.commonDir,
           commonIdentity: checkout.commonIdentity,
         };
-        this.#db
-          .prepare("INSERT INTO repositories VALUES (?, ?, ?)")
-          .run(repository.id, repository.commonDir, repository.commonIdentity);
+        await db.insert(schema.repositories).values(repository).run();
       }
       const workspace: Workspace = {
         id: `ws_${randomUUID()}`,
@@ -265,49 +222,37 @@ export class Registry {
         environmentId: this.environmentId,
         ...checkout,
       };
-      this.#db
-        .prepare("INSERT INTO workspaces VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-        .run(
-          workspace.id,
-          workId,
-          repository.id,
-          this.environmentId,
-          checkout.root,
-          checkout.gitDir,
-          checkout.commonDir,
-          checkout.commonIdentity,
-          checkout.revision,
-          checkout.branch,
-        );
+      await db.insert(schema.workspaces).values(workspace).run();
       return workspace;
     });
   }
 
-  #context(): Context {
-    const row = this.#db
-      .prepare("SELECT generation, workspaceId FROM context WHERE singleton=1")
+  async #context(db: QueryDatabase): Promise<Context> {
+    const row = await db
+      .select()
+      .from(schema.context)
+      .where(eq(schema.context.singleton, 1))
       .get();
     assert.ok(
-      row &&
-        typeof row.generation === "number" &&
-        Number.isSafeInteger(row.generation) &&
-        row.generation >= 0,
+      row && Number.isSafeInteger(row.generation) && row.generation >= 0,
       "invalid context generation",
     );
-    const workspace =
-      row.workspaceId === null
-        ? null
-        : this.#workspace(String(row.workspaceId));
-    return { generation: row.generation, workspace };
+    return {
+      generation: row.generation,
+      workspace:
+        row.workspaceId === null
+          ? null
+          : await this.#workspace(db, row.workspaceId),
+    };
   }
 
   async context(): Promise<Context> {
-    const observed = this.#context();
+    const observed = await this.#transaction((db) => this.#context(db));
     const checkout = observed.workspace
       ? await inspectCheckout(observed.workspace.root)
       : null;
-    return this.#transaction(() => {
-      const current = this.#context();
+    return this.#transaction(async (db) => {
+      const current = await this.#context(db);
       assert.equal(
         current.generation,
         observed.generation,
@@ -319,14 +264,14 @@ export class Registry {
     });
   }
 
-  #generation(expected: number): Context {
+  async #generation(db: QueryDatabase, expected: number): Promise<Context> {
     assert.ok(
       Number.isSafeInteger(expected) &&
         expected >= 0 &&
         expected < Number.MAX_SAFE_INTEGER,
       "invalid expected generation",
     );
-    const current = this.#context();
+    const current = await this.#context(db);
     assert.equal(current.generation, expected, "stale context generation");
     return current;
   }
@@ -335,19 +280,21 @@ export class Registry {
     workspaceId: string,
     expectedGeneration: number,
   ): Promise<Context> {
-    this.#generation(expectedGeneration);
-    const observed = this.#workspace(workspaceId);
+    const observed = await this.#transaction(async (db) => {
+      await this.#generation(db, expectedGeneration);
+      return this.#workspace(db, workspaceId);
+    });
     const checkout = await inspectCheckout(observed.root);
-    return this.#transaction(() => {
-      this.#generation(expectedGeneration);
-      const workspace = this.#workspace(workspaceId);
+    return this.#transaction(async (db) => {
+      await this.#generation(db, expectedGeneration);
+      const workspace = await this.#workspace(db, workspaceId);
       sameCheckout(workspace, checkout);
-      this.#db
-        .prepare(
-          "UPDATE context SET generation=generation+1, workspaceId=? WHERE singleton=1",
-        )
-        .run(workspaceId);
-      return this.#context();
+      await db
+        .update(schema.context)
+        .set({ generation: sql`${schema.context.generation} + 1`, workspaceId })
+        .where(eq(schema.context.singleton, 1))
+        .run();
+      return this.#context(db);
     });
   }
 
@@ -356,21 +303,26 @@ export class Registry {
     workspaceId: string,
     expectedGeneration: number,
   ): Promise<Workspace> {
-    this.#generation(expectedGeneration);
-    const observed = this.#workspace(workspaceId);
+    const observed = await this.#transaction(async (db) => {
+      await this.#generation(db, expectedGeneration);
+      return this.#workspace(db, workspaceId);
+    });
     const checkout = await inspectCheckout(observed.root);
-    return this.#transaction(() => {
-      this.#generation(expectedGeneration);
-      const workspace = this.#workspace(workspaceId);
+    return this.#transaction(async (db) => {
+      await this.#generation(db, expectedGeneration);
+      const workspace = await this.#workspace(db, workspaceId);
       sameCheckout(workspace, checkout, false);
-      this.#db
-        .prepare("UPDATE workspaces SET revision=?, branch=? WHERE id=?")
-        .run(checkout.revision, checkout.branch, workspaceId);
-      // Invalidate prior contexts even when refreshing a non-selected workspace.
-      this.#db.exec(
-        "UPDATE context SET generation=generation+1 WHERE singleton=1",
-      );
-      return this.#workspace(workspaceId);
+      await db
+        .update(schema.workspaces)
+        .set({ revision: checkout.revision, branch: checkout.branch })
+        .where(eq(schema.workspaces.id, workspaceId))
+        .run();
+      await db
+        .update(schema.context)
+        .set({ generation: sql`${schema.context.generation} + 1` })
+        .where(eq(schema.context.singleton, 1))
+        .run();
+      return this.#workspace(db, workspaceId);
     });
   }
 }

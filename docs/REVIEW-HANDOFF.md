@@ -1,102 +1,113 @@
-# Tier 1 review handoff — local Work/Workspace registry
+# Tier 1 review handoff — typed SQLite ORM and migrations
 
-## Scope transition and base
+## Accepted base and scope
 
-Kirk explicitly requested: **“let's proceed with the focused Tier 1”**, after
-reviewing/merging the foundation. PR #11 is merged as
-`5d3ae5203f7f8d4d7d97a6e014d93e8459aade5a`; this increment starts directly there on
-`feat/t1-workspace-registry`. Development remains on macOS.
+Kirk merged registry PR #12 as `a8b4e4dfb3086e081e5cca6c343661aaabc6e24b` and
+requested a type-safe SQLite ORM with migrations. This increment starts directly
+there on `feat/t1-typed-sqlite`. Development remains on macOS, within focused Tier 1.
+No native worker, remote enrollment, UI or workflow engine is enabled.
 
-The current priority is DESIGN §§5/9/15: a usable local work loop, not additional
-bundle infrastructure. Kirk also requested Git/CLI library reuse, inspection of
-Pi's ecosystem, a CLI skill and a package README. Those are included here.
+## Resulting behavior
 
-This authorization opens **focused Tier 1**, not Tier 2 worker execution. Existing
-Landlock/raw-stop scoped acceptance remains intact; guest PID and broader boundary
-qualification gaps remain unresolved. No failed native test is reclassified as a
-pass. No new native VM, host install, remote enrollment, credential or service
-change is performed. `AGENTS.md` records this scope rather than a blanket waiver.
+- Drizzle ORM **0.45.2** typed SQLite tables, queries and inferred domain rows replace
+  handwritten application SQL and `as unknown as Work/Workspace` casts.
+- Public Drizzle SQLite proxy adapter runs entirely in-process on the existing
+  Node **22.23.2** `node:sqlite`; no remote SQL, new SQLite engine or native addon.
+- `await Registry.open(...)` and asynchronous create/list APIs; CLI syntax, XDG
+  storage, IDs, JSON results, profile checks and context-generation semantics remain.
+- Drizzle Kit **0.31.10** generation/check commands and versioned SQL/snapshots.
+  Exact schema-1 databases are adopted without replaying their seed rows, then
+  upgraded to schema 2. All identities, context and Git observations are retained.
+- Applied migration hashes/order and actual schema are checked. Wrong profile,
+  unknown schema, unrelated data and tampered history fail. The official migrator
+  runs inside an outer IMMEDIATE transaction with rollback of DDL/version/journal.
+- Per-file JS queue protects asynchronous transactions sharing a file; SQLite
+  remains the cross-process locking mechanism. Git inspection stays outside writes.
+- Eight new behavior tests plus compile-only negative type contracts; existing
+  tests are adapted to async calls without removing their assertions.
 
-## This increment
+[Core README](../packages/core/README.md) documents the API change, migration/recovery
+procedure and limitations. [State portability](STATE-PORTABILITY.md) records Kirk's
+additional requirements: logical Git backups, explicit machine rebinding, and
+separate immutable revision versus JJ/Gerrit change/review identities. These are
+future contracts, **not implemented export/import, sync or new VCS adapters**.
 
-- `packages/core/`: persistent Work/repository/workspace/local-environment IDs,
-  existing-worktree adoption and SQLite context with compare-and-swap generations.
-- Read-only Git observations through simple-git, explicit identity/revision/branch
-  drift checks, explicit metadata refresh without checkout mutation.
-- Commander CLI with help/subcommands, required profile, dedicated XDG state defaults,
-  an explicit state override and JSON results; no collision with Pi-owned state.
-- `packages/core/README.md`: package setup, walkthrough, API, state/recovery and limits.
-- `docs/WORK-AND-RESUMPTION.md`: morning workflow and storage/sharing refinement;
-  optional multi-repo checkout sets, build constraints, internal goals/tasks/loops
-  and conversation threads are design requirements, not implemented features.
-- `skills/workbench/SKILL.md`: opt-in task-oriented Pi guidance; no global install,
-  automatic harness reload, candidate extension execution or permission grants.
-- `docs/PI-ECOSYSTEM.md`: pinned upstream observations; reuse public conventions,
-  not private Pi internals. TypeBox/shared-action and Pi TUI consumers follow later.
+## Dependencies and review focus
 
-Direct runtime additions: Commander **15.0.0**, simple-git **3.36.0**. Both satisfy
-the release quarantine. Six new registry records, **285 total**; existing lock
-records are unchanged. SQLite comes from pinned Node 22.23.2 and emits its honest
-experimental-feature warning. No lifecycle script, hoist/peer/source-policy exception,
-CI/lint policy relaxation or attribution integration change is introduced.
+Runtime adds one Drizzle package; generator tooling raises the lock from 285 to
+**347 registry records**. Kit and its matching ORM are explicit root development
+dependencies: Kit dynamically imports ORM without declaring it as a peer. This
+placement works with the unchanged no-hoist/strict-peer policy; no fallback module
+lookup, peer waiver, lifecycle script or source-policy exception is introduced.
 
-## Review focus
+Kit's deprecated ESM-loader chain brings **one moderate development-only esbuild
+advisory**, GHSA-67mh-4wv8-2f99. High/critical counts are zero under the unchanged
+required audit threshold. No advisory suppression is used. No esbuild dev server
+or Drizzle Studio is started; the vulnerability is not claimed fixed.
 
-1. **Useful context:** two Git worktrees have independent workspace IDs but share a
-   local repository record. Selection survives process restart; HEAD/branch drift
-   fails rather than rewriting files. Dirty source is retained but not snapshot-bound.
-2. **State semantics:** explicit init, schema-1 reopen/empty-database migration,
-   future/unrelated schema refusal, profile mismatch, transactional rollback and
-   competing client generations. IDs are local registry identities, not host attestations.
-3. **Reuse and limits:** no bespoke argument parser or subprocess queue; library
-   unsafe-operation guards stay enabled. Registry permissions and Git observation
-   budgets are not a sandbox or verification-to-execution handoff. No current result
-   may authorize a test, agent, SSH operation or publication.
-4. **Agent usability:** skill commands match the actual CLI and teach resume-before-
-   create, stdout JSON parsing, explicit profile/generation and non-destructive recovery.
-   The pinned skill-loader inspection retains positive/negative cases but does not
-   qualify the public SDK: Pi 0.85.0 import failed on undeclared `pi-server`. Review
-   that deliberately narrower test boundary separately; the original failure is
-   retained and reproducible in [PI-ECOSYSTEM.md](PI-ECOSYSTEM.md). No runtime patch,
-   dependency injection or private production import hides the SDK failure.
+Review separately:
 
-## Validation and evidence
+1. **Driver/type boundary:** array results (including duplicate names), missing rows,
+   nulls and prepared parameters. One adapter-local compatibility cast accommodates
+   upstream typings; application rows are ORM-inferred. Type safety does not prove
+   arbitrary SQL, runtime input or migrations correct.
+2. **Migration correctness:** populated historical fixture, preserved IDs/selection,
+   unchanged STRICT/foreign-key/uniqueness constraints, journal adoption and atomic
+   rollback. Drizzle snapshots do not encode STRICT; generated rebuilds must retain
+   it explicitly. Named unique indexes coexist with legacy inline uniqueness.
+3. **Concurrency and test changes:** existing context races still reject stale
+   generations. Async APIs do not expose another transaction's partial writes through
+   the registry. The new compile-only expected-error cases enforce type failures;
+   they are not production diagnostic suppressions.
+4. **Scope:** opening an existing DB can migrate it even for a read command. Take a
+   closed-state recovery copy before upgrading releases. No automatic backup/down-
+   migration is claimed. Old schema-1 binaries reject schema 2; preserve newer work
+   when recovering rather than blindly restoring old bytes.
+
+## Validation
 
 ```sh
 pnpm check
+pnpm db:check
+pnpm db:generate --name=drift_probe  # unchanged schema must generate nothing
 pnpm audit --audit-level high
 pnpm check:hooks
-pnpm --filter @pi-workbench/core test
-pnpm --silent workbench --help
 ```
 
-The core tests use disposable local Git worktrees with raw synthetic commit objects;
-no actual commit/push, identity override or attribution bypass is used to make
-fixtures. Real project commits/pushes retain upstream hooks. Historical hook success
-and intentional-refusal fixtures are not recast as new integration tests.
+Core coverage includes original CLI/path/profile/Git/concurrency regressions, populated
+v1→v2 upgrade/reopen, wrong-profile/schema-drift byte preservation, injected migration
+failure with complete rollback and successful retry, changed migration history,
+constraint retention, proxy row/parameter mapping, transaction-queue failure release,
+and isolated schema-generation no-op/real-change detection. Kit's absolute-output-path
+fixture initially printed an error while exiting zero; using cwd-relative output as in
+production fixes that fixture without removing its semantic success assertions.
+This tests SQL-error rollback, not all process-kill, filesystem or disk-full failures.
 
-Candidate source/configuration/lock digests, exact committed SHA, clean-clone checks
-and fresh hosted CI identities will be attached to the PR. Until then, local checks
-are development evidence, not a published candidate acceptance claim. Worker image
-is not applicable to these host-side metadata and synthetic fixture tests.
+Candidate SHA, config/lock/source hashes, exact runtime and clean-clone/hosted evidence
+will be attached to the PR. No worker image applies to these host-side fixture tests.
+Existing hook checks and real commits/pushes remain authoritative; no attribution
+integration change or manufactured trailers.
 
-Prior #11 [Foundation run 34011202853](https://github.com/kirkbrauer/pi-workbench/actions/runs/34011202853)
-validated candidate `79afd9e00ab11a8b29960b2bb362679ed8cf1923` on merge
-`8a4302252b8bd9dd7ace6695f3eb1629b727d042`, ubuntu-24.04 image
-20260831.293.1, Node 22.23.2: 49 JS/TS passed + one actual-session hook integration
-skip, 11 Python passed + one Mac OpenSSL skip. That is baseline evidence only,
-not validation of this registry.
+Baseline #12 [Foundation run 34043738163](https://github.com/kirkbrauer/pi-workbench/actions/runs/34043738163)
+passed candidate `e48be7920adf5dcdece1a39d4844b6918663c85a` on tested merge
+`5eccc5377b1c9fc3a51415925b035753e4180644`, ubuntu-24.04 image 20260831.293.1,
+Node 22.23.2: 63 JS/TS passed + one actual-session hook integration skip; 11 Python
+passed + one Mac OpenSSL skip. That is not new ORM evidence.
 
-## Remaining Tier 1 work
+## Remaining gates
 
-Next review-sized increments: Project/repository membership, optional checkout-set,
-Work/reference, goal/task and thread-reference contracts with fixture state/migrations;
-shared typed action preparation and fixture approval binding; fake-provider durable
-run state, bounded artifacts and duplicate-request reconciliation. Keep the common
-single-repo case simple; do not build a generic scheduler or Repo adapter now. Registry/context is the first slice, not complete Tier 1 or a broker.
-After Kirk's tier review, one real sandboxed Pi implementation task remains the
-operational goal, subject to its specific runtime/credential qualification gates.
+Pi 0.85.0's public-SDK import failure on undeclared `pi-server` is unchanged and not
+hidden by the pin-bound skill implementation inspection. Existing native resource/
+credential-boundary gaps remain unresolved; accepted Landlock/raw-stop limitations
+are not passing tests. No full Tier 1 or worker acceptance is implied.
 
-Keep bundles, remote placement/enrollment, rich UI, team distribution and a general
-workflow engine off this critical path. Do not merge/enqueue for Kirk. Preserve
-unpublished work and the running host harness/toolchain.
+Kirk also requested [scoped post-turn development checks](POST-TURN-CHECKS.md) with
+direct model feedback and TypeScript-first LSP diagnostics. Implement that as a
+separate small tooling increment; nothing
+is installed or enabled in this session by the design document.
+
+Next domain work: small fixture-backed domain migrations for Projects/Work/goals/tasks/threads,
+then prepared-action/approval and fake-run/artifact contracts. Optional multi-repo,
+Repo and fixed-build-path cases should inform the contracts without becoming setup
+requirements for every project. Keep bundle work, real remote placement and generic
+scheduling off this critical path. Stop for Kirk's GitHub review; no merge/enqueue.
