@@ -1,5 +1,14 @@
 # Tier 0 follow-up review handoff
 
+## Paused for macOS verification
+
+Start with [MACOS-HANDOFF.md](MACOS-HANDOFF.md). PRs #2 and #3 are now merged;
+observed main is `18eb784274d82dbaf668274a5be4558356c5036d`. Their previous
+open/stacked status below is historical. The merged tree matches the tested
+Fedora spike; no Mac runtime/image evidence exists yet. Full worker qualification
+remains blocked. Fedora VMs and synthetic PKI are cleaned up, gateway inactive.
+Do not transfer `.local/` or run the Fedora-specific scripts unchanged on macOS.
+
 ## Current stacked follow-up: native best effort
 
 Branch `feat/t0-native-runtime-spike` depends on open PR #2 at `ac96b2b`. Kirk

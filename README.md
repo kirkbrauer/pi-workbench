@@ -42,6 +42,10 @@ For the bounded rootless helper and immutable development image, see
 corporate CA qualification are in [REGISTRIES-AND-CA.md](docs/REGISTRIES-AND-CA.md).
 The native VM **ran but failed qualification**; see [NATIVE-VM.md](docs/NATIVE-VM.md).
 
+Resuming on another machine? [macOS verification handoff](docs/MACOS-HANDOFF.md)
+records the merged base, Fedora results and platform-specific checks. The current
+native launch helpers are Fedora-specific, not verified Mac setup scripts.
+
 ## Attribution
 
 Preserve installed `git-attribution-hooks`, not Husky or a new repo hooksPath.
