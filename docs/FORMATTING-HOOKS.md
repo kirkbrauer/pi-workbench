@@ -65,6 +65,18 @@ The initial helper caps batches at 500 supported files, individual command outpu
 at 4 MiB, Git operations at 10 seconds and formatter operations at 15 seconds.
 These are per-operation limits, not aggregate host quotas.
 
+## Declaration spacing
+
+Use a blank line between top-level interface/type declarations and neighboring
+logical declarations. Biome 2.5.12 **preserves** such blank lines but does not insert
+missing ones; its configuration schema has no declaration-padding option. The
+configured two-space indentation is unrelated. A direct formatter probe confirmed
+that both adjacent interfaces and blank-line-separated interfaces remain unchanged.
+
+This convention currently needs source review. The staged Biome check does **not**
+enforce it; automatic enforcement would require a separately tested lint rule.
+Do not assume that a green formatter establishes every readability convention.
+
 ## Verification and recovery
 
 Six ordinary fixture tests run with `pnpm check`. The seventh test deliberately
