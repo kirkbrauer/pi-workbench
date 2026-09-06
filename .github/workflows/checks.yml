@@ -32,6 +32,8 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Check diagnostic helper syntax (no native VM execution in CI)
         run: for script in scripts/*.sh; do bash -n "$script"; done
+      - name: Test native helper orchestration with a fake CLI (no VM or secrets)
+        run: python3 -B -m unittest discover -s scripts/tests -p 'test_*.py' -v
       - run: pnpm check
       - name: Block known high or critical vulnerabilities (including dev dependencies)
         run: pnpm audit --audit-level high

@@ -1,0 +1,88 @@
+Tier 0 trusted diagnostics only. Unmodified OpenShell 0.0.116. 2026-09-06 UTC.
+Source base: ac96b2b96203234908e44d85cb8465b140b57109 + these component SHA256s:
+1b53adb2c47f93284eb924b129b5263349bf7f6134616bf1ee715ec2d72ee3ed  scripts/native-probe.sh
+51ef8430a1e644caa11a0bd864106821d9d5d1b0f3a3b64d7be60d6fd5dce636  scripts/native-lifecycle-probe.sh
+61c4e39cc7c99a053d40eb0ca68a13908cdc4174509dedf75913666c124becc8  scripts/guest-runtime-diagnose.py
+08d65b474ea862e8f33deaca74a2f2a37a858bbe19e7a962f01f23947794497e  config/native-diagnostic-policy.yaml
+3e0fc7723d588988abf9e743e9e2ac6bfaf2559a4a8bebc9356d62cdb2d7503b  .local/openshell/gateway.toml
+Raw-stop, boundary and network runs used identical policy but helper before the CLI timeout change: abe4e751654d22035164083fb08b32b2faf1cfdc635b45f9118410bb6a27c14d.
+
+## final-diagnostics.json
+{
+  "kernel": "6.12.76",
+  "architecture": "x86_64",
+  "uid": 998,
+  "boot_id": "a563fd47-aa8e-4cf8-a441-18c85af1ec30",
+  "lsm": "unavailable: No such file or directory (errno=2)",
+  "security_boot_options": [],
+  "cgroup": "0::/",
+  "controllers": "cpuset cpu io memory hugetlb pids",
+  "subtree_control": "",
+  "root_pids_max": "unavailable: No such file or directory (errno=2)",
+  "process_security": [
+    "CapInh:\t0000000000000000",
+    "CapPrm:\t0000000000000000",
+    "CapEff:\t0000000000000000",
+    "CapBnd:\t0000000000000000",
+    "CapAmb:\t0000000000000000",
+    "NoNewPrivs:\t1",
+    "Seccomp:\t2",
+    "Seccomp_filters:\t3"
+  ],
+  "mounts": [
+    "42 28 0:32 / / rw,relatime shared:12 - overlay overlay rw,lowerdir=/lower,upperdir=/overlay/upper,workdir=/overlay/work",
+    "44 42 254:0 / /.openshell-bootstrap ro,relatime shared:1 - ext4 /dev/vda ro",
+    "49 48 0:23 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime shared:7 - cgroup2 cgroup2 rw"
+  ],
+  "landlock": {
+    "abi": -1,
+    "errno": 95
+  },
+  "kernel_config": "unavailable: [Errno 2] No such file or directory: '/proc/config.gz'"
+}
+
+
+## current-plain.log
+write/read PASS plain 6f061542-98cd-4b6d-8d7a-9a7e1fa6bde3
+✓ Stopped sandbox workbench-t0-probe
+✓ Started sandbox workbench-t0-probe
+after restart plain faf83fad-a838-4a93-8fa4-ee00283e8896
+Traceback (most recent call last):
+  File "<stdin>", line 8, in <module>
+AssertionError: FAIL: /sandbox/t0-plain disappeared
+
+
+## final-checkpoint.log
+write/read PASS checkpoint 37211368-ba5a-40a0-b3a9-d90efea6145d
+✓ Stopped sandbox workbench-t0-probe
+✓ Started sandbox workbench-t0-probe
+after restart checkpoint a563fd47-aa8e-4cf8-a441-18c85af1ec30
+persistence PASS checkpoint 37211368-ba5a-40a0-b3a9-d90efea6145d -> a563fd47-aa8e-4cf8-a441-18c85af1ec30
+
+
+## network-denial.txt
+proxy request rejected: <urlopen error Tunnel connection failed: 403 Forbidden>
+direct TCP probe did not connect: [Errno 111] Connection refused (not full egress conformance)
+
+
+## current-boundary.txt
+kernel=6.12.76
+boot_id=2c42d6ad-d809-4d6e-9b9d-31c0b2d60444
+uid=998(sandbox) gid=998(sandbox) groups=998(sandbox)
+vcpus=2
+MemTotal:        2075496 kB
+0::/
+allowed workspace write/read passed; host fixture/home/engine paths absent
+FAIL: guest PID budget unavailable/unlimited
+
+
+## duplicate-start.txt
+Refusing to overwrite configuration of a running probe.
+
+
+## Strict policy negative probe
+CLI exited 124 at 60-second bound; gateway phase=Provisioning. Not a clean terminal failure.
+2026-09-06T00:17:09.245Z WARN openshell_supervisor_process::process: runtime cgroup pids.max is unavailable (No such file or directory (os error 2)); configure the compute driver or container runtime to enforce a PID limit
+2026-09-06T00:17:09.246Z OCSF FINDING:CREATE [HIGH] "Landlock Filesystem Sandbox Unavailable" [type:landlock-unavailable confidence:high]
+2026-09-06T00:17:09.261Z OCSF CONFIG:CLEANED_UP [INFO] Network namespace cleaned up [ns:sandbox-c62002a7]
+No UNEXPECTED_STRICT_EXECUTION output was observed. This is bounded negative evidence, not a general fail-closed conformance proof.
